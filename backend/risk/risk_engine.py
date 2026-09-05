@@ -95,5 +95,5 @@ def calculate_forecast_risk(disease, forecast):
     return {
         "risk_score": max_score,
         "risk_level": risk_level,
-        "forecast_hour": max_index
+        "forecast_time": forecast["time"][max_index]
     }

@@ -33,6 +33,7 @@ def get_weather(latitude, longitude):
             "rainfall": data["current"]["rain"],
             "rain_probability": data["hourly"]["precipitation_probability"][0],
             "forecast": {
+                "time": data["hourly"]["time"][:24],
                 "temperature": data["hourly"]["temperature_2m"][:24],
                 "humidity": data["hourly"]["relative_humidity_2m"][:24],
                 "rain_probability": data["hourly"]["precipitation_probability"][:24],
