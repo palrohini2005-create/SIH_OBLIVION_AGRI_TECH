@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MahaCrop Guard | SIH 2026</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- React, Babel & Leaflet Scripts -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          animation: {
+            'spin-slow': 'spin 8s linear infinite',
+            'spin-reverse': 'spinReverse 5s linear infinite',
+            'bounce-funky': 'bounceFunky 0.9s cubic-bezier(0.28, 0.84, 0.42, 1) infinite',
+            'party-pop': 'partyPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+            'neon-pulse': 'neonGlow 1.8s ease-in-out infinite alternate',
+            'orbit': 'orbit 4s linear infinite',
+          },
+          keyframes: {
+            spinReverse: {
+              '0%': { transform: 'rotate(360deg)' },
+              '100%': { transform: 'rotate(0deg)' },
+            },
+            bounceFunky: {
+              '0%, 100%': { transform: 'translateY(0) scale(1, 1)' },
+              '30%': { transform: 'translateY(-18px) scale(0.92, 1.08)' },
+              '60%': { transform: 'translateY(0) scale(1.08, 0.92)' },
+              '75%': { transform: 'translateY(-6px) scale(0.98, 1.02)' },
+            },
+            partyPop: {
+              '0%': { transform: 'scale(0.4) rotate(-15deg)', opacity: '0' },
+              '70%': { transform: 'scale(1.08) rotate(4deg)', opacity: '1' },
+              '100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
+            },
+            neonGlow: {
+              '0%': { filter: 'drop-shadow(0 0 10px #10b981) drop-shadow(0 0 25px #06b6d4)' },
+              '100%': { filter: 'drop-shadow(0 0 25px #f43f5e) drop-shadow(0 0 50px #8b5cf6)' },
+            },
+            orbit: {
+              '0%': { transform: 'rotate(0deg) translateX(48px) rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg) translateX(48px) rotate(-360deg)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+    .leaflet-container { width: 100%; height: 100%; border-radius: 1.25rem; z-index: 10; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white min-h-screen overflow-x-hidden font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const CROPS = [
+      { id: 'Tomato', name: 'Tomato', icon: '🍅', border: 'border-rose-400', badge: 'bg-rose-500/20 text-rose-300' },
+      { id: 'Rice', name: 'Rice (Paddy)', icon: '🌾', border: 'border-amber-400', badge: 'bg-amber-500/20 text-amber-300' },
+      { id: 'Cotton', name: 'Cotton', icon: '🌱', border: 'border-sky-400', badge: 'bg-sky-500/20 text-sky-300' },
+      { id: 'Potato', name: 'Potato', icon: '🥔', border: 'border-orange-400', badge: 'bg-orange-500/20 text-orange-300' }
+    ];
+
+    const HOTSPOTS = [
+      { lat: 19.9975, lng: 73.7898, name: 'Nashik Cluster', crop: 'Tomato', count: 42, color: '#f43f5e' },
+      { lat: 20.7002, lng: 77.0082, name: 'Akola Hub', crop: 'Cotton', count: 68, color: '#f43f5e' },
+      { lat: 18.5204, lng: 73.8567, name: 'Pune Valley', crop: 'Potato', count: 25, color: '#f59e0b' },
+      { lat: 18.1511, lng: 74.5772, name: 'Baramati Zone', crop: 'Rice', count: 19, color: '#10b981' }
+    ];
+
+    const INITIAL_REPORTS = [
+      { id: 'MAH-8402', crop: 'Tomato', disease: 'Early Blight (Alternaria solani)', confidence: 96, severity: 'High', status: 'Pending', farmer: 'Suresh More', location: 'Nashik', time: '12m ago' },
+      { id: 'MAH-8401', crop: 'Cotton', disease: 'Pink Bollworm Infestation', confidence: 89, severity: 'Critical', status: 'Approved', farmer: 'Kavita Jadhav', location: 'Akola', time: '45m ago' },
+      { id: 'MAH-8399', crop: 'Rice', disease: 'Bacterial Leaf Streak', confidence: 92, severity: 'Medium', status: 'Pending', farmer: 'Balasaheb K.', location: 'Raigad', time: '2h ago' },
+      { id: 'MAH-8395', crop: 'Potato', disease: 'Late Blight Phytophthora', confidence: 97, severity: 'Critical', status: 'Approved', farmer: 'Amol Shinde', location: 'Pune', time: '5h ago' }
+    ];
+
+    // FUNKY STARTING SPLASH SCREEN (KEPT INTACT)
+    function FunkyBootScreen({ onComplete }) {
+      const [step, setStep] = useState(0);
+      const splashMessages = [
+        "BOOTING MAHARASHTRA AGRI-SATELLITE...",
+        "SYNCHRONIZING AI VISION MATRICES...",
+        "LOCATING 4-CROP TELEMETRY CLUSTERS...",
+        "WELCOME TO MAHACROP GUARD 2026!"
+      ];
+
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setStep((prev) => {
+            if (prev < splashMessages.length - 1) return prev + 1;
+            clearInterval(interval);
+            setTimeout(onComplete, 550);
+            return prev;
+          });
+        }, 650);
+
+        return () => clearInterval(interval);
+      }, []);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center font-sans overflow-hidden">
+          <div className="absolute w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[140px] animate-neon-pulse pointer-events-none"></div>
+          <div className="absolute w-[450px] h-[450px] bg-rose-500/20 rounded-full blur-[140px] animate-neon-pulse pointer-events-none delay-300"></div>
+
+          <div className="relative flex flex-col items-center z-10">
+            <div className="relative w-44 h-44 flex items-center justify-center mb-8">
+              <div className="absolute inset-0 rounded-full border-4 border-dashed border-emerald-400/60 animate-spin-slow"></div>
+              <div className="absolute inset-2.5 rounded-full border-4 border-dotted border-cyan-400/80 animate-spin-reverse"></div>
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-500 flex items-center justify-center shadow-2xl animate-party-pop">
+                <span className="text-5xl animate-bounce-funky">🌾</span>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-rose-400 text-sm flex items-center justify-center shadow-lg animate-orbit">
+                  🛰️
+                </div>
+              </div>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight text-center drop-shadow">
+              MahaCrop Guard
+            </h1>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">SIH 2026 • Problem ID: 26131</p>
+
+            <div className="mt-8 bg-slate-900/90 border border-slate-700/80 px-6 py-3 rounded-2xl flex items-center gap-3 shadow-xl">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <p className="font-mono text-xs font-bold text-emerald-300 tracking-wider">
+                {splashMessages[step]}
+              </p>
+            </div>
+
+            <div className="w-56 h-2 bg-slate-800 rounded-full mt-4 overflow-hidden border border-slate-700/60 p-0.5">
+              <div 
+                className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_12px_#10b981]"
+                style={{ width: `${((step + 1) / splashMessages.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // MAP COMPONENT
+    function InteractiveMap() {
+      const mapContainer = useRef(null);
+      const mapInstance = useRef(null);
+
+      useEffect(() => {
+        if (!mapInstance.current && mapContainer.current) {
+          mapInstance.current = L.map(mapContainer.current).setView([19.7515, 75.7139], 7);
+
+          L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '© Google Maps | Govt. of Maharashtra AgSurveillance',
+            maxZoom: 18,
+          }).addTo(mapInstance.current);
+
+          HOTSPOTS.forEach(spot => {
+            const circle = L.circleMarker([spot.lat, spot.lng], {
+              radius: 12,
+              fillColor: spot.color,
+              color: '#ffffff',
+              weight: 2.5,
+              opacity: 1,
+              fillOpacity: 0.85
+            }).addTo(mapInstance.current);
+
+            circle.bindPopup(`
+              <div style="font-family: system-ui; padding: 4px; color: #0f172a;">
+                <strong style="font-size: 13px;">${spot.name}</strong><br/>
+                <span style="font-size: 11px; color: #475569;">Target Crop: ${spot.crop}</span><br/>
+                <span style="display:inline-block; margin-top:4px; font-size: 11px; font-weight: bold; color: ${spot.color};">
+                  ● ${spot.count} Active Outbreak Cases
+                </span>
+              </div>
+            `);
+          });
+        }
+      }, []);
+
+      return <div ref={mapContainer} className="h-72 w-full rounded-2xl overflow-hidden shadow-inner border border-slate-700/60" />;
+    }
+
+    function App() {
+      const [booting, setBooting] = useState(true);
+      const [role, setRole] = useState(null);
+      const [authTab, setAuthTab] = useState('farmer');
+      const [selectedCrop, setSelectedCrop] = useState('Tomato');
+      const [reports, setReports] = useState(INITIAL_REPORTS);
+      const [isAnalyzing, setIsAnalyzing] = useState(false);
+      const [latestDiagnosis, setLatestDiagnosis] = useState(null);
+      const [activeToast, setActiveToast] = useState(null);
+
+      const triggerToast = (msg) => {
+        setActiveToast(msg);
+        setTimeout(() => setActiveToast(null), 3000);
+      };
+
+      const handleScanAction = () => {
+        setIsAnalyzing(true);
+        setLatestDiagnosis(null);
+
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          const mockOutcomes = {
+            Tomato: { disease: 'Early Blight (Alternaria solani)', conf: 96, risk: 'High', advisory: 'Apply Mancozeb 75% WP @ 2g/L water. Prune affected lower leaves immediately.' },
+            Rice: { disease: 'Rice Blast (Magnaporthe oryzae)', conf: 94, risk: 'Critical', advisory: 'Spray Tricyclazole 75% WP @ 0.6g/L water. Suspend heavy nitrogen applications.' },
+            Cotton: { disease: 'Pink Bollworm Invasion', conf: 91, risk: 'Critical', advisory: 'Set up 5 Gossyplure pheromone traps/acre. Spray Profenofos 50% EC.' },
+            Potato: { disease: 'Late Blight (Phytophthora)', conf: 98, risk: 'High', advisory: 'Spray Cymoxanil + Mancozeb @ 3g/L. Drain excess canal water from furrows.' }
+          };
+
+          const picked = mockOutcomes[selectedCrop];
+          const newRec = {
+            id: `MAH-${Math.floor(8400 + Math.random() * 500)}`,
+            crop: selectedCrop,
+            disease: picked.disease,
+            confidence: picked.conf,
+            severity: picked.risk,
+            status: 'Pending',
+            farmer: 'Self Scan (Mobile)',
+            location: 'Nashik District',
+            time: 'Just Now'
+          };
+
+          setLatestDiagnosis({ ...picked, ...newRec });
+          setReports(prev => [newRec, ...prev]);
+          triggerToast('Telemetry & Leaf Data synced to District Extension!');
+        }, 1200);
+      };
+
+      const handleVerifyReport = (id) => {
+        setReports(reports.map(r => r.id === id ? { ...r, status: 'Approved' } : r));
+        triggerToast(`Case ${id} confirmed & SMS treatment instructions pushed.`);
+      };
+
+      if (booting) {
+        return <FunkyBootScreen onComplete={() => setBooting(false)} />;
+      }
+
+      // AUTH PORTAL (CLEAN, NO BOUNCE/FLOAT)
+      if (!role) {
+        return (
+          <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-950 font-sans">
+            <div className="relative w-full max-w-md glass-card rounded-3xl p-8 shadow-2xl border border-slate-800">
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-300 p-0.5 shadow-lg mb-4">
+                  <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-3xl">
+                    🌱
+                  </div>
+                </div>
+                <h1 className="text-3xl font-black tracking-tight text-white">MahaCrop <span className="text-emerald-400">Guard</span></h1>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300/90 mt-1 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                  SIH 2026 Problem ID: 26131
+                </span>
+                <p className="text-xs text-slate-400 mt-1">Govt. of Maharashtra Agri-Surveillance Portal</p>
+              </div>
+
+              {/* Static Segmented Toggle */}
+              <div className="grid grid-cols-2 p-1.5 bg-slate-900 border border-slate-700/60 rounded-2xl mb-6">
+                <button
+                  onClick={() => setAuthTab('farmer')}
+                  className={`py-2.5 text-xs font-bold rounded-xl ${
+                    authTab === 'farmer' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🌾 Farmer Clinic
+                </button>
+                <button
+                  onClick={() => setAuthTab('officer')}
+                  className={`py-2.5 text-xs font-bold rounded-xl ${
+                    authTab === 'officer' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🛡️ Agri Officer
+                </button>
+              </div>
+
+              {authTab === 'farmer' ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Kisan Mobile / Aadhaar No.</label>
+                    <input type="text" defaultValue="+91 98450 12389" className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Taluka / Village</label>
+                    <input type="text" defaultValue="Baramati, Pune" className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500" />
+                  </div>
+                  <button 
+                    onClick={() => setRole('farmer')}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white font-bold text-sm rounded-xl shadow-md"
+                  >
+                    Open Crop Health Clinic →
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Departmental Gov ID</label>
+                    <input type="text" defaultValue="MAH-AGRI-4491" className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-sky-500" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Officer Passcode</label>
+                    <input type="password" defaultValue="••••••••" className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-sky-500" />
+                  </div>
+                  <button 
+                    onClick={() => setRole('officer')}
+                    className="w-full py-3.5 bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 text-white font-bold text-sm rounded-xl shadow-md"
+                  >
+                    Access GIS Surveillance Command →
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // MAIN APP CONTAINER (STABLE, ZERO BOUNCE/SCANNER LINES)
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
+          {activeToast && (
+            <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-emerald-400">
+              <span>🔔</span> {activeToast}
+            </div>
+          )}
+
+          {/* Clean Navbar */}
+          <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-6 py-4">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-xl">
+                  🌿
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-white flex items-center gap-2">
+                    MahaCrop Guard
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Maharashtra
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    {role === 'farmer' ? '🌾 Farmer Crop Health Portal' : '🛡️ Agri Extension GIS Command Room'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setRole(null); setLatestDiagnosis(null); }}
+                  className="text-xs font-bold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 px-3.5 py-2 rounded-xl"
+                >
+                  Switch Role
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto p-4 md:p-8">
+            
+            {/* FARMER UI */}
+            {role === 'farmer' && (
+              <div className="grid lg:grid-cols-12 gap-8">
+                
+                {/* Scanner Left Column */}
+                <div className="lg:col-span-7 space-y-6">
+                  
+                  {/* 4 Crops Only Component */}
+                  <div className="glass-card rounded-3xl p-6 border border-slate-800">
+                    <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">1</span>
+                      Targeted Crop (Strictly 4 Crops)
+                    </h3>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {CROPS.map((crop) => {
+                        const isSelected = selectedCrop === crop.id;
+                        return (
+                          <button
+                            key={crop.id}
+                            onClick={() => { setSelectedCrop(crop.id); setLatestDiagnosis(null); }}
+                            className={`p-4 rounded-2xl border text-center flex flex-col items-center gap-1.5 ${
+                              isSelected
+                                ? `bg-emerald-500/15 ${crop.border} border-2`
+                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850'
+                            }`}
+                          >
+                            <span className="text-3xl">{crop.icon}</span>
+                            <span className="text-xs font-bold text-white mt-1">{crop.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Leaf Upload Box (Static & Clean) */}
+                  <div className="glass-card rounded-3xl p-6 border border-slate-800">
+                    <h3 className="font-bold text-white text-sm mb-1 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">2</span>
+                      Scan {selectedCrop} Leaf
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4">Click below to upload or simulate multi-spectrum leaf diagnosis.</p>
+
+                    <div
+                      onClick={handleScanAction}
+                      className="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-3xl h-48 flex flex-col items-center justify-center cursor-pointer bg-slate-900/60"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-3xl mb-2">
+                        📷
+                      </div>
+                      <p className="font-bold text-white text-sm">
+                        {isAnalyzing ? 'Analyzing Pathogen Features...' : `Click to Upload ${selectedCrop} Leaf`}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">Deep Learning Vision Pipeline Active</p>
+                    </div>
+
+                    {latestDiagnosis && (
+                      <div className="mt-6 p-6 rounded-3xl bg-slate-900 border border-emerald-500/40">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Identified Pathogen</span>
+                          <span className="text-[11px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full">
+                            {latestDiagnosis.confidence}% Match
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold text-white mb-2">{latestDiagnosis.disease}</h4>
+                        <div className="bg-slate-800 p-4 rounded-xl text-xs text-slate-200 mb-3 border border-slate-700">
+                          <strong className="text-amber-400 block mb-1">Recommended Treatment:</strong>
+                          {latestDiagnosis.advisory}
+                        </div>
+                        <div className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
+                          ✓ Case dispatched to Taluka Extension Officer queue.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Micro-Climate & History Right Column */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="glass-card rounded-3xl p-6 border border-slate-800">
+                    <h4 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
+                      <span>🌦️</span> Micro-Climate Risk Radar
+                    </h4>
+                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs leading-relaxed">
+                      <strong>Humidity Warning (88%):</strong> High risk for fungal spore spread in <strong>Tomato</strong> and <strong>Potato</strong> fields across Nashik/Pune over next 48h.
+                    </div>
+                  </div>
+
+                  <div className="glass-card rounded-3xl p-6 border border-slate-800">
+                    <h4 className="font-bold text-white text-sm mb-3">Your Field History</h4>
+                    <div className="space-y-2 max-h-72 overflow-y-auto custom-scroll pr-1">
+                      {reports.map(r => (
+                        <div key={r.id} className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex justify-between items-center text-xs">
+                          <div>
+                            <p className="font-bold text-white">{r.crop} - <span className="text-slate-400">{r.id}</span></p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">{r.disease}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            r.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                          }`}>
+                            {r.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* OFFICER UI */}
+            {role === 'officer' && (
+              <div className="space-y-6">
+                
+                {/* Metric Summary Counters */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Active Reports', val: reports.length, icon: '📋', col: 'text-sky-400' },
+                    { label: 'Pending Validations', val: reports.filter(r => r.status === 'Pending').length, icon: '⏳', col: 'text-amber-400' },
+                    { label: 'Hotspot Talukas', val: '4 Active', icon: '📍', col: 'text-rose-400' },
+                    { label: 'Target Crops', val: '4 Types', icon: '🌱', col: 'text-emerald-400' }
+                  ].map((m, i) => (
+                    <div key={i} className="glass-card p-5 rounded-3xl border border-slate-800">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-2xl">{m.icon}</span>
+                        <span className={`text-2xl font-black ${m.col}`}>{m.val}</span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-400 mt-1">{m.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Google Maps Embed Section */}
+                <div className="glass-card rounded-3xl p-6 border border-slate-800">
+                  <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
+                    <div>
+                      <h3 className="font-bold text-white text-base flex items-center gap-2">
+                        <span>🛰️</span> Maharashtra Surveillance GIS Map
+                      </h3>
+                      <p className="text-xs text-slate-400">Live Google Maps tiles plotting real-time pathogen clusters</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-lg font-bold">● Outbreak Hotspot</span>
+                      <span className="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg font-bold">● Moderate Risk</span>
+                    </div>
+                  </div>
+
+                  <InteractiveMap />
+                </div>
+
+                {/* Verification Queue Table */}
+                <div className="glass-card rounded-3xl p-6 border border-slate-800">
+                  <h3 className="font-bold text-white text-base mb-4">Farmer Submissions Verification Queue</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                          <th className="py-3 px-3">Case ID</th>
+                          <th className="py-3 px-3">Target Crop</th>
+                          <th className="py-3 px-3">Diagnosed Pathogen</th>
+                          <th className="py-3 px-3">Location</th>
+                          <th className="py-3 px-3">Confidence</th>
+                          <th className="py-3 px-3">Status</th>
+                          <th className="py-3 px-3 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {reports.map((row) => (
+                          <tr key={row.id} className="hover:bg-slate-900/50">
+                            <td className="py-3 px-3 font-mono font-bold text-slate-300">{row.id}</td>
+                            <td className="py-3 px-3 font-bold text-white flex items-center gap-1.5">
+                              <span>{CROPS.find(c => c.id === row.crop)?.icon}</span>
+                              {row.crop}
+                            </td>
+                            <td className="py-3 px-3 font-medium text-slate-200">{row.disease}</td>
+                            <td className="py-3 px-3 text-slate-400">{row.location}</td>
+                            <td className="py-3 px-3 font-bold text-emerald-400">{row.confidence}%</td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                row.status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                              }`}>
+                                {row.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              {row.status === 'Pending' ? (
+                                <button
+                                  onClick={() => handleVerifyReport(row.id)}
+                                  className="bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] px-3.5 py-1.5 rounded-xl shadow-md"
+                                >
+                                  Approve & Notify
+                                </button>
+                              ) : (
+                                <span className="text-slate-500 text-[11px] font-semibold">Validated ✓</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
