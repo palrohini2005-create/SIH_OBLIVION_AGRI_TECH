@@ -68,6 +68,7 @@ def calculate_forecast_risk(disease, forecast):
     if disease not in DISEASE_RULES:
         return {"error": "Disease not supported"}
 
+    scores = []
     max_score = 0
     max_index = 0
 
@@ -81,10 +82,24 @@ def calculate_forecast_risk(disease, forecast):
             forecast["rain_probability"][i]
         )
 
+        scores.append(result["risk_score"])
+
         if result["risk_score"] > max_score:
             max_score = result["risk_score"]
             max_index = i
 
+    # Calculate risk trend
+    first_score = scores[0]
+    last_score = scores[-1]
+
+    if last_score > first_score:
+        trend = "INCREASING"
+    elif last_score < first_score:
+        trend = "DECREASING"
+    else:
+        trend = "STABLE"
+
+    # Risk level
     if max_score >= 70:
         risk_level = "HIGH"
     elif max_score >= 40:
@@ -95,5 +110,6 @@ def calculate_forecast_risk(disease, forecast):
     return {
         "risk_score": max_score,
         "risk_level": risk_level,
-        "forecast_time": forecast["time"][max_index]
+        "forecast_time": forecast["time"][max_index],
+        "trend": trend
     }
