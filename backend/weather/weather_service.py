@@ -2,6 +2,7 @@ import requests
 
 
 def get_weather(latitude, longitude):
+
     url = "https://api.open-meteo.com/v1/forecast"
 
     params = {
@@ -12,16 +13,28 @@ def get_weather(latitude, longitude):
         "forecast_days": 1
     }
 
-    response = requests.get(url, params=params)
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            timeout=10
+        )
 
-    if response.status_code != 200:
-        return {"error": "Unable to fetch weather data"}
+        if response.status_code != 200:
+            return {
+                "error": "Unable to fetch weather data"
+            }
 
-    data = response.json()
+        data = response.json()
 
-    return {
-        "temperature": data["current"]["temperature_2m"],
-        "humidity": data["current"]["relative_humidity_2m"],
-        "rainfall": data["current"]["rain"],
-        "rain_probability": data["hourly"]["precipitation_probability"][0]
-    }
+        return {
+            "temperature": data["current"]["temperature_2m"],
+            "humidity": data["current"]["relative_humidity_2m"],
+            "rainfall": data["current"]["rain"],
+            "rain_probability": data["hourly"]["precipitation_probability"][0]
+        }
+
+    except requests.RequestException:
+        return {
+            "error": "Weather service unavailable"
+        }
