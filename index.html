@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maha Crop Guard — Smart Farming, Healthier Harvests | SIH 2026</title>
+
+  <!-- Tailwind CSS & Plus Jakarta Sans Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS for Google Maps Tiles -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- React 18, Babel & Leaflet JS -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              500: '#16a34a',
+              600: '#15803d',
+              700: '#166534',
+              900: '#14532d',
+            }
+          },
+          boxShadow: {
+            'glow-green': '0 20px 45px -10px rgba(22, 163, 74, 0.25)',
+            'card-elevated': '0 20px 40px -15px rgba(15, 23, 42, 0.08)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #f8fafc; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::selection { background: #15803d; color: white; }
+
+    /* Refined Lush Agricultural Backdrop with Vignette */
+    .hero-vivid-bg {
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(240, 253, 244, 0.88) 55%, #f8fafc 100%),
+                  radial-gradient(circle at 10% 20%, rgba(22, 163, 74, 0.12), transparent 40%),
+                  url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center 25%;
+    }
+
+    .glass-clean {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+    }
+
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .leaflet-container { width: 100%; height: 100%; border-radius: 1.25rem; z-index: 10; }
+  </style>
+</head>
+
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const CROPS = [
+  { id: 'Tomato', name: 'Tomato', icon: '🍅', border: 'border-rose-300', badge: 'bg-rose-50 text-rose-700', disease: 'Early Blight (Alternaria solani)' },
+  { id: 'Rice', name: 'Rice (Paddy)', icon: '🌾', border: 'border-amber-300', badge: 'bg-amber-50 text-amber-700', disease: 'Rice Blast (Magnaporthe oryzae)' },
+  { id: 'Cotton', name: 'Cotton', icon: '🌱', border: 'border-sky-300', badge: 'bg-sky-50 text-sky-700', disease: 'Pink Bollworm Infestation' },
+  { id: 'Potato', name: 'Potato', icon: '🥔', border: 'border-orange-300', badge: 'bg-orange-50 text-orange-700', disease: 'Late Blight (Phytophthora)' }
+];
+
+const TEAM_MEMBERS = [
+  { initials: 'NS', name: 'Nidhi Soni', role: 'Team Lead • AI / ML', color: 'bg-emerald-100 text-emerald-800' },
+  { initials: 'ZG', name: 'Zaina Gangopadhyay', role: 'Weather Risk Prediction • Advisory', color: 'bg-teal-100 text-teal-800' },
+  { initials: 'RP', name: 'Rohini Pal', role: 'Database • Maps & GIS Integration', color: 'bg-blue-100 text-blue-800' },
+  { initials: 'SK', name: 'Sonal Kumari', role: 'Backend & REST API Lead', color: 'bg-indigo-100 text-indigo-800' },
+  { initials: 'AB', name: 'Adeo Banerjee', role: 'Frontend Lead • Officer & GIS Dashboard', color: 'bg-amber-100 text-amber-800' },
+  { initials: 'IC', name: 'Irfan Chaudhury', role: 'Frontend Dev • Farmer App & UI', color: 'bg-rose-100 text-rose-800' }
+];
+
+const HOTSPOTS = [
+  { lat: 19.9975, lng: 73.7898, name: 'Nashik Cluster', crop: 'Tomato', count: 42, color: '#e11d48' },
+  { lat: 20.7002, lng: 77.0082, name: 'Akola Hub', crop: 'Cotton', count: 68, color: '#e11d48' },
+  { lat: 18.5204, lng: 73.8567, name: 'Pune Valley', crop: 'Potato', count: 25, color: '#f59e0b' },
+  { lat: 18.1511, lng: 74.5772, name: 'Baramati Zone', crop: 'Rice', count: 19, color: '#15803d' }
+];
+
+const INITIAL_REPORTS = [
+  { id: 'MCG-24081', farmer: 'Suresh More', crop: 'Tomato', disease: 'Early Blight (Alternaria solani)', location: 'Nashik', confidence: 96, severity: 'High', status: 'Pending', age: '12m ago' },
+  { id: 'MCG-24080', farmer: 'Kavita Jadhav', crop: 'Cotton', disease: 'Pink Bollworm Infestation', location: 'Akola', confidence: 89, severity: 'Critical', status: 'Approved', age: '45m ago' },
+  { id: 'MCG-24077', farmer: 'Balasaheb K.', crop: 'Rice', disease: 'Rice Blast Pathogen', location: 'Raigad', confidence: 92, severity: 'Medium', status: 'Pending', age: '2h ago' },
+  { id: 'MCG-24072', farmer: 'Amol Shinde', crop: 'Potato', disease: 'Late Blight Phytophthora', location: 'Pune', confidence: 97, severity: 'Critical', status: 'Approved', age: '5h ago' }
+];
+
+// Interactive GIS Google Maps Tile Component
+function MapSurveillance() {
+  const mapContainer = useRef(null);
+  const mapInstance = useRef(null);
+
+  useEffect(() => {
+    if (!mapInstance.current && mapContainer.current) {
+      mapInstance.current = L.map(mapContainer.current).setView([19.7515, 75.7139], 7);
+
+      L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        attribution: '© Google Maps | Govt. of Maharashtra AgSurveillance',
+        maxZoom: 18,
+      }).addTo(mapInstance.current);
+
+      HOTSPOTS.forEach(spot => {
+        const circle = L.circleMarker([spot.lat, spot.lng], {
+          radius: 11,
+          fillColor: spot.color,
+          color: '#ffffff',
+          weight: 2.5,
+          opacity: 1,
+          fillOpacity: 0.92
+        }).addTo(mapInstance.current);
+
+        circle.bindPopup(`
+          <div style="font-family: system-ui; padding: 4px; color: #0f172a;">
+            <strong style="font-size: 13px;">${spot.name}</strong><br/>
+            <span style="font-size: 11px; color: #64748b;">Target Crop: ${spot.crop}</span><br/>
+            <span style="display:inline-block; margin-top:4px; font-size: 11px; font-weight: bold; color: ${spot.color};">
+              ● ${spot.count} Active Outbreak Reports
+            </span>
+          </div>
+        `);
+      });
+    }
+  }, []);
+
+  return <div ref={mapContainer} className="h-80 w-full rounded-2xl border border-slate-200 shadow-inner" />;
+}
+
+// MAIN APPLICATION COMPONENT
+function App() {
+  const [activeNav, setActiveNav] = useState('Home');
+  const [userRole, setUserRole] = useState(null); // 'farmer' | 'officer' | null
+  const [authType, setAuthType] = useState('farmer'); // 'farmer' | 'officer'
+  const [selectedCrop, setSelectedCrop] = useState('Tomato');
+  const [reports, setReports] = useState(INITIAL_REPORTS);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [diagnosis, setDiagnosis] = useState(null);
+  const [previewImg, setPreviewImg] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const triggerToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3200);
+  };
+
+  const handleSimulatedScan = () => {
+    setIsAnalyzing(true);
+    setDiagnosis(null);
+
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      const outcomes = {
+        Tomato: { disease: 'Early Blight (Alternaria solani)', conf: 96, sev: 'High', advisory: 'Apply Mancozeb 75% WP @ 2g/L water. Remove lower yellowing leaves.' },
+        Rice: { disease: 'Rice Blast (Magnaporthe oryzae)', conf: 94, sev: 'Critical', advisory: 'Spray Tricyclazole 75% WP @ 0.6g/L water. Suspend heavy nitrogen applications.' },
+        Cotton: { disease: 'Pink Bollworm Infestation', conf: 91, sev: 'Critical', advisory: 'Erect 5 Gossyplure pheromone traps/acre. Spray Profenofos 50% EC.' },
+        Potato: { disease: 'Late Blight (Phytophthora)', conf: 98, sev: 'High', advisory: 'Immediate spray of Cymoxanil + Mancozeb @ 3g/L. Drain stagnant canal water.' }
+      };
+
+      const result = outcomes[selectedCrop];
+      const newRec = {
+        id: `MCG-${Math.floor(24100 + Math.random() * 500)}`,
+        farmer: 'Suresh More (Self)',
+        crop: selectedCrop,
+        disease: result.disease,
+        location: 'Nashik District',
+        confidence: result.conf,
+        severity: result.sev,
+        status: 'Pending',
+        age: 'Just now'
+      };
+
+      setDiagnosis({ ...result, ...newRec });
+      setReports(prev => [newRec, ...prev]);
+      triggerToast('AI scan complete & pushed to District Extension Officer!');
+    }, 1400);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPreviewImg(URL.createObjectURL(file));
+      handleSimulatedScan();
+    }
+  };
+
+  const handleApproveCase = (id) => {
+    setReports(reports.map(r => r.id === id ? { ...r, status: 'Approved' } : r));
+    triggerToast(`Case ${id} verified & SMS advisory queued.`);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-brand-500 selection:text-white">
+      
+      {/* Toast Alert */}
+      {toastMsg && (
+        <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 border border-slate-700">
+          <span>🔔</span> {toastMsg}
+        </div>
+      )}
+
+      {/* Floating AI Krishi Mitra Assistant */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setChatOpen(!chatOpen)}
+          className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-3 rounded-full shadow-glow-green font-bold text-xs flex items-center gap-2.5 transition transform active:scale-95"
+        >
+          <span className="text-base">🤖</span>
+          <span>Ask AI Krishi Mitra</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+        </button>
+      </div>
+
+      {/* AI Krishi Mitra Drawer Modal */}
+      {chatOpen && (
+        <div className="fixed bottom-20 right-6 z-50 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200 p-5 font-sans">
+          <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">🌾</div>
+              <div>
+                <h4 className="text-xs font-black text-slate-900">AI Krishi Mitra</h4>
+                <p className="text-[10px] text-slate-400 font-semibold">Multilingual Agri-Expert (Marathi / English)</p>
+              </div>
+            </div>
+            <button onClick={() => setChatOpen(false)} className="text-slate-400 hover:text-slate-700 text-xs font-bold">✕</button>
+          </div>
+          <div className="py-4 space-y-2.5 text-xs">
+            <div className="p-3 rounded-2xl bg-brand-50 text-slate-800 border border-brand-100 leading-relaxed">
+              <strong>Namaskar!</strong> How can I help protect your <strong>{selectedCrop}</strong> crop today? You can ask about pesticide dosages, organic remedies, or rain forecasts.
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <input placeholder="Ask about crop diseases..." className="flex-1 bg-slate-50 border border-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-brand-500" />
+            <button onClick={() => triggerToast('Query sent to Krishi Mitra!')} className="bg-brand-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl">Send</button>
+          </div>
+        </div>
+      )}
+
+      {/* Header & Navigation Bar */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 py-4 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          
+          {/* Logo Brand */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setUserRole(null); setActiveNav('Home'); }}>
+            <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center text-xl shadow-md shadow-brand-600/20">
+              🌱
+            </div>
+            <div>
+              <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">Maha Crop Guard</h1>
+              <p className="text-[10px] font-bold text-brand-600 tracking-wider uppercase mt-1">AI Crop Health Companion</p>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-7 text-xs font-bold text-slate-600">
+            {['Home', 'Features', 'How It Works', 'Surveillance Map', 'About Us', 'Contact'].map((nav) => (
+              <button
+                key={nav}
+                onClick={() => { setActiveNav(nav); if(userRole) setUserRole(null); }}
+                className={`transition-colors py-1 ${activeNav === nav ? 'text-brand-600 border-b-2 border-brand-600' : 'hover:text-brand-600'}`}
+              >
+                {nav}
+              </button>
+            ))}
+          </nav>
+
+          {/* User Status / Action Button */}
+          <div className="flex items-center gap-3">
+            {userRole ? (
+              <button
+                onClick={() => { setUserRole(null); setDiagnosis(null); }}
+                className="text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition"
+              >
+                Sign Out ({userRole})
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                  <span>🌐</span> English
+                </span>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </header>
+
+      {/* ===================== LOGGED-IN WORKSPACES ===================== */}
+      {userRole ? (
+        <main className="max-w-7xl mx-auto p-4 md:p-8 flex-1 w-full">
+          {userRole === 'farmer' ? (
+            /* FARMER SCREEN */
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">Farmer Crop Clinic 🌾</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Baramati, Nashik Zone • Live Model Status: Connected</p>
+                </div>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 self-start"
+                >
+                  <span>📷</span> Snap or Upload Leaf
+                </button>
+              </div>
+
+              <div className="grid lg:grid-cols-12 gap-8">
+                {/* Left Side: 4 Crop Switcher & Upload */}
+                <div className="lg:col-span-7 space-y-6">
+                  
+                  {/* Strict 4 Crop Selector */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                    <h3 className="font-black text-slate-900 text-sm mb-3 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs">1</span>
+                      Target Crop Selection (Strictly 4 Crops)
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {CROPS.map((c) => {
+                        const active = selectedCrop === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => { setSelectedCrop(c.id); setDiagnosis(null); }}
+                            className={`p-4 rounded-2xl border text-center transition flex flex-col items-center gap-1.5 ${
+                              active
+                                ? 'bg-brand-50 border-brand-500 ring-2 ring-brand-500/20 shadow-sm'
+                                : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-500'
+                            }`}
+                          >
+                            <span className="text-3xl">{c.icon}</span>
+                            <span className="text-xs font-black text-slate-900 mt-1">{c.name}</span>
+                            <span className="text-[10px] text-slate-400 font-medium truncate max-w-full">{c.disease.split(' ')[0]}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Leaf Diagnosis Screen */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                    <h3 className="font-black text-slate-900 text-sm mb-1 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs">2</span>
+                      Capture or Upload {selectedCrop} Leaf
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-4">Focus directly on infected lesions, discolorations, or leaf holes.</p>
+
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-slate-100 transition relative overflow-hidden min-h-52"
+                    >
+                      {previewImg && <img src={previewImg} className="absolute inset-0 w-full h-full object-cover opacity-30" />}
+                      <div className="relative z-10 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center text-3xl mx-auto mb-2 shadow-sm">
+                          {isAnalyzing ? '⏳' : '📷'}
+                        </div>
+                        <p className="font-bold text-slate-900 text-sm">
+                          {isAnalyzing ? 'Scanning Leaf with Vision Model...' : `Snap or Upload ${selectedCrop} Photo`}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">Supports JPG, PNG (Max 10MB)</p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSimulatedScan(); }}
+                          className="mt-3 px-3.5 py-1.5 bg-brand-600 text-white font-bold text-[11px] rounded-lg shadow-sm hover:bg-brand-700"
+                        >
+                          Simulate AI Diagnosis
+                        </button>
+                      </div>
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
+                    {diagnosis && (
+                      <div className="mt-5 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-slate-800">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Pathogen Identified</span>
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                            {diagnosis.conf}% Match
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-black text-slate-900 mb-2">{diagnosis.disease}</h4>
+                        <div className="p-3.5 bg-white rounded-xl border border-emerald-200/60 text-xs text-slate-700 leading-relaxed mb-3">
+                          <strong className="text-brand-700 block mb-0.5">Recommended Treatment & Safe Dosage:</strong>
+                          {diagnosis.advisory}
+                        </div>
+                        <p className="text-[11px] text-brand-800 font-bold flex items-center gap-1.5">
+                          ✓ Report auto-dispatched to Taluka Extension Officer (Case: {diagnosis.id}).
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Right Side: Micro-Climate Alerts & History */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                    <h4 className="font-black text-slate-900 text-sm mb-3 flex items-center justify-between">
+                      <span className="flex items-center gap-2"><span>🌦️</span> Micro-Climate Risk Window</span>
+                      <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">Nashik</span>
+                    </h4>
+                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed mb-3">
+                      <strong>Relative Humidity Spike (88%):</strong> High vulnerability for fungal blight spore dispersion in <strong>Tomato</strong> and <strong>Potato</strong> fields over next 48h.
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Apply Trichoderma viride or approved bio-fungicides before heavy noon rains.
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                    <h4 className="font-black text-slate-900 text-sm mb-3">Your Field History</h4>
+                    <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scroll pr-1">
+                      {reports.map((r) => (
+                        <div key={r.id} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center text-xs">
+                          <div>
+                            <p className="font-bold text-slate-900 flex items-center gap-1">
+                              <span>{CROPS.find(c => c.id === r.crop)?.icon}</span>
+                              {r.crop} • <span className="text-slate-400 font-mono text-[10px]">{r.id}</span>
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">{r.disease}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            r.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {r.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* OFFICER SCREEN */
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Active Alerts', val: reports.length, icon: '📋', col: 'text-slate-900' },
+                  { label: 'Pending Validations', val: reports.filter(r => r.status === 'Pending').length, icon: '⏳', col: 'text-amber-600' },
+                  { label: 'Hotspot Districts', val: '4 Clusters', icon: '📍', col: 'text-rose-600' },
+                  { label: 'Scope Crops', val: '4 Crops', icon: '🌾', col: 'text-brand-600' }
+                ].map((c, i) => (
+                  <div key={i} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-2xl">{c.icon}</span>
+                      <span className={`text-2xl font-black ${c.col}`}>{c.val}</span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-500 mt-1">{c.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Google Maps GIS Embed */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
+                  <div>
+                    <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                      <span>🛰️</span> Maharashtra Surveillance GIS Map (Google Maps Tiles)
+                    </h3>
+                    <p className="text-xs text-slate-500">Live outbreak clusters across Nashik, Akola, Pune, and Baramati</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg">● Outbreak Hotspot</span>
+                    <span className="text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-lg">● Moderate Risk</span>
+                  </div>
+                </div>
+                <MapSurveillance />
+              </div>
+
+              {/* Action Table */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <h3 className="font-black text-slate-900 text-base mb-4">Farmer Submissions Verification Queue</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider font-bold">
+                        <th className="py-3 px-3">Case ID</th>
+                        <th className="py-3 px-3">Farmer</th>
+                        <th className="py-3 px-3">Crop</th>
+                        <th className="py-3 px-3">Pathogen Diagnosed</th>
+                        <th className="py-3 px-3">Location</th>
+                        <th className="py-3 px-3">Confidence</th>
+                        <th className="py-3 px-3">Status</th>
+                        <th className="py-3 px-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {reports.map((row) => (
+                        <tr key={row.id} className="hover:bg-slate-50 transition">
+                          <td className="py-3.5 px-3 font-mono font-bold text-slate-700">{row.id}</td>
+                          <td className="py-3.5 px-3 font-bold text-slate-900">{row.farmer}</td>
+                          <td className="py-3.5 px-3 font-bold text-slate-800 flex items-center gap-1.5">
+                            <span>{CROPS.find(c => c.id === row.crop)?.icon}</span>
+                            {row.crop}
+                          </td>
+                          <td className="py-3.5 px-3 font-medium text-slate-700">{row.disease}</td>
+                          <td className="py-3.5 px-3 text-slate-500">{row.location}</td>
+                          <td className="py-3.5 px-3 font-bold text-brand-600">{row.confidence}%</td>
+                          <td className="py-3.5 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              row.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 text-right">
+                            {row.status === 'Pending' ? (
+                              <button
+                                onClick={() => handleApproveCase(row.id)}
+                                className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-[11px] px-3.5 py-1.5 rounded-xl shadow-sm transition active:scale-95"
+                              >
+                                Validate Advisory
+                              </button>
+                            ) : (
+                              <span className="text-slate-400 text-[11px] font-semibold">Validated ✓</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      ) : (
+        /* ===================== LANDING & MARKETING PAGES ===================== */
+        <main className="flex-1 w-full">
+          
+          {/* HERO SECTION WITH VIVID BACKDROP */}
+          <section className="hero-vivid-bg pt-10 pb-20 px-6 border-b border-slate-200">
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10 items-center">
+              
+              {/* Left Column Text & Feature Pills */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 border border-brand-200 text-brand-800 text-xs font-black shadow-sm">
+                  <span>🌾</span> Early Detection & Management of Crop Diseases
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.08] tracking-tight">
+                  Smart Farming.<br />
+                  <span className="text-brand-600">Healthier Harvests</span>
+                </h1>
+
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
+                  Maha Crop Guard enables early detection of leaf pathogens to protect crop yields across Maharashtra. Powered by deep vision symptom identification and real-time extension alerts.
+                </p>
+
+                {/* 4 Feature Pills */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 max-w-xl">
+                  <div className="bg-white/95 p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
+                    <span className="text-2xl block mb-1">🔬</span>
+                    <h4 className="text-xs font-black text-slate-900">AI Leaf Scan</h4>
+                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Instant disease identification</p>
+                  </div>
+                  <div className="bg-white/95 p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
+                    <span className="text-2xl block mb-1">🌱</span>
+                    <h4 className="text-xs font-black text-slate-900">Dosage Guide</h4>
+                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Precise remedy dosage</p>
+                  </div>
+                  <div className="bg-white/95 p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
+                    <span className="text-2xl block mb-1">🌦️</span>
+                    <h4 className="text-xs font-black text-slate-900">Weather Radar</h4>
+                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Fungal risk alerts</p>
+                  </div>
+                  <div className="bg-white/95 p-4 rounded-2xl border border-slate-200/80 shadow-sm text-center">
+                    <span className="text-2xl block mb-1">🛡️</span>
+                    <h4 className="text-xs font-black text-slate-900">Expert Desk</h4>
+                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Official extension portal</p>
+                  </div>
+                </div>
+
+                {/* Govt Statement Focus Ribbon */}
+                <div className="bg-white/90 border border-slate-200 p-3.5 rounded-2xl inline-flex items-center gap-3 text-xs font-bold text-slate-700 shadow-sm">
+                  <span className="w-7 h-7 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">🏛️</span>
+                  <div>
+                    <span className="text-slate-900 block font-black">Govt of Maharashtra Problem Statement Focus</span>
+                    <span className="text-slate-500 text-[11px] font-medium">Preventing crop financial loss through proactive early detection.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Glassmorphism Login Card */}
+              <div className="lg:col-span-5 flex justify-center">
+                <div className="w-full max-w-md glass-clean rounded-3xl p-7 sm:p-9 shadow-2xl border border-white">
+                  
+                  <div className="text-center mb-6">
+                    <h3 className="text-xl font-black text-slate-900">Welcome Back! 🌿</h3>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">Login to continuous crop portal</p>
+                  </div>
+
+                  {/* Role Switcher */}
+                  <div className="grid grid-cols-2 p-1.5 bg-slate-100 rounded-2xl mb-6">
+                    <button
+                      onClick={() => setAuthType('farmer')}
+                      className={`py-2.5 text-xs font-bold rounded-xl transition ${
+                        authType === 'farmer' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      🌾 Farmer
+                    </button>
+                    <button
+                      onClick={() => setAuthType('officer')}
+                      className={`py-2.5 text-xs font-bold rounded-xl transition ${
+                        authType === 'officer' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      🛡️ Official (Agri Dept)
+                    </button>
+                  </div>
+
+                  {authType === 'farmer' ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Mobile Number / Email</label>
+                        <input
+                          type="text"
+                          defaultValue="+91 98450 12389"
+                          className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-brand-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Password</label>
+                        <input
+                          type="password"
+                          defaultValue="••••••••"
+                          className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-brand-600"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setUserRole('farmer')}
+                        className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-brand-600/30 transition active:scale-[0.98]"
+                      >
+                        Login Workspace →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Departmental Gov ID</label>
+                        <input
+                          type="text"
+                          defaultValue="MAH-AGRI-EX-4491"
+                          className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-sky-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Passcode</label>
+                        <input
+                          type="password"
+                          defaultValue="••••••••"
+                          className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-sky-600"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setUserRole('officer')}
+                        className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-sky-600/30 transition active:scale-[0.98]"
+                      >
+                        Login Command Center →
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="mt-6 pt-5 border-t border-slate-200/80 text-center">
+                    <button 
+                      onClick={() => setUserRole(authType)}
+                      className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-xs font-bold transition"
+                    >
+                      <span>🚀</span> Continue as Guest Tester
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          {/* PLATFORM IMPACT METRICS (CORRECTED STRICT 4 CROPS) */}
+          <section className="py-16 px-6 bg-white border-b border-slate-200">
+            <div className="max-w-7xl mx-auto text-center space-y-4">
+              <span className="text-[10px] uppercase tracking-widest font-black text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1 rounded-full">
+                PLATFORM IMPACT
+              </span>
+              <h2 className="text-3xl font-black text-slate-900">Trusted Technology for Smarter Farming</h2>
+              <p className="text-slate-500 text-xs sm:text-sm max-w-xl mx-auto font-medium">
+                Empowering farmers and agricultural officials with AI-driven crop health insights.
+              </p>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8">
+                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 text-center">
+                  <span className="text-3xl block mb-2">🌾</span>
+                  <h3 className="text-2xl font-black text-slate-900">4 Priority</h3>
+                  <p className="text-xs font-bold text-brand-700 mt-1">Crops Supported</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Tomato, Rice, Cotton & Potato</p>
+                </div>
+
+                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 text-center">
+                  <span className="text-3xl block mb-2">📈</span>
+                  <h3 className="text-2xl font-black text-slate-900">20+</h3>
+                  <p className="text-xs font-bold text-brand-700 mt-1">Disease Classes</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">AI-based identification</p>
+                </div>
+
+                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 text-center">
+                  <span className="text-3xl block mb-2">🤖</span>
+                  <h3 className="text-2xl font-black text-slate-900">Vision AI</h3>
+                  <p className="text-xs font-bold text-brand-700 mt-1">Powered Detection</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Image-based crop analysis</p>
+                </div>
+
+                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 text-center">
+                  <span className="text-3xl block mb-2">📞</span>
+                  <h3 className="text-2xl font-black text-slate-900">24x7</h3>
+                  <p className="text-xs font-bold text-brand-700 mt-1">Digital Assistance</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">AI-powered farming guidance</p>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full inline-flex items-center gap-2">
+                  <span>✓</span> Built for farmers, extension workers and agricultural departments
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* HOW IT WORKS SECTION */}
+          <section id="how-it-works" className="py-16 px-6 bg-slate-50 border-b border-slate-200">
+            <div className="max-w-7xl mx-auto space-y-10">
+              <div className="text-center space-y-2">
+                <span className="text-[10px] uppercase tracking-widest font-black text-brand-700 bg-brand-100 px-3 py-1 rounded-full">SYSTEM WORKFLOW</span>
+                <h2 className="text-3xl font-black text-slate-900">How Maha Crop Guard Works</h2>
+                <p className="text-xs text-slate-500">A 3-step workflow designed for rapid response in rural agricultural environments</p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                {[
+                  { step: '1', title: 'Capture Leaf Image', desc: 'Take a photo of any damaged leaf or upload telemetry data from field sensors.', icon: '📸' },
+                  { step: '2', title: 'AI Neural Analysis', desc: 'Deep neural models analyze pathogen patterns and compare with local climate data.', icon: '🧠' },
+                  { step: '3', title: 'Actionable Prescription', desc: 'Receive precise organic and chemical spray instructions to isolate the threat.', icon: '💊' }
+                ].map((s) => (
+                  <div key={s.step} className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm relative">
+                    <span className="w-8 h-8 rounded-full bg-brand-600 text-white font-black text-xs flex items-center justify-center mb-4">
+                      {s.step}
+                    </span>
+                    <span className="text-3xl block mb-2">{s.icon}</span>
+                    <h4 className="text-base font-black text-slate-900">{s.title}</h4>
+                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">{s.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* SURVEILLANCE GIS MAP PREVIEW */}
+          <section id="surveillance" className="py-16 px-6 bg-white border-b border-slate-200">
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="flex flex-col md:flex-row justify-between md:items-end gap-3">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest font-black text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                    GEOSPATIAL SURVEILLANCE
+                  </span>
+                  <h2 className="text-3xl font-black text-slate-900 mt-2">District Outbreak Hotspot Radar</h2>
+                  <p className="text-xs text-slate-500">Integrated with Google Maps tiles to isolate disease clusters across Maharashtra</p>
+                </div>
+                <button onClick={() => setUserRole('officer')} className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm self-start">
+                  Open Officer Command Console →
+                </button>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-3xl border border-slate-200 shadow-sm">
+                <MapSurveillance />
+              </div>
+            </div>
+          </section>
+
+          {/* ABOUT US: MEET TEAM OBLIVION */}
+          <section id="about-us" className="py-16 px-6 bg-slate-50 border-b border-slate-200">
+            <div className="max-w-7xl mx-auto space-y-10">
+              <div className="text-center space-y-2">
+                <span className="text-[10px] uppercase tracking-widest font-black text-brand-700 bg-brand-100 px-3 py-1 rounded-full">SIH PROTOTYPE DEVELOPMENT</span>
+                <h2 className="text-3xl font-black text-slate-900">Meet Team Oblivion</h2>
+                <p className="text-xs text-slate-500 max-w-xl mx-auto">
+                  6 CSE (IoT) 3rd year students committed to solving real-world agricultural problems for Govt. of Maharashtra to prevent crop loss.
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {TEAM_MEMBERS.map((m) => (
+                  <div key={m.name} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-brand-500 transition">
+                    <div className={`w-12 h-12 rounded-2xl ${m.color} flex items-center justify-center font-black text-sm shrink-0 shadow-sm`}>
+                      {m.initials}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">{m.name}</h4>
+                      <p className="text-xs text-slate-500 font-semibold mt-0.5">{m.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* CONTACT & SUPPORT */}
+          <section id="contact" className="py-16 px-6 bg-white">
+            <div className="max-w-4xl mx-auto text-center space-y-6">
+              <span className="text-[10px] uppercase tracking-widest font-black text-brand-700 bg-brand-100 px-3 py-1 rounded-full">GOVERNMENT HELPLINES</span>
+              <h2 className="text-3xl font-black text-slate-900">Contact & Support</h2>
+              <p className="text-xs text-slate-500">Get immediate agricultural assistance or escalate high-risk crop outbreaks</p>
+
+              <div className="grid sm:grid-cols-3 gap-4 pt-4 text-left">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                  <span className="text-xl block mb-1">📞</span>
+                  <h4 className="text-xs font-black text-slate-900">Kisan Call Center</h4>
+                  <p className="text-xs font-bold text-brand-700 mt-1">1800-180-1551</p>
+                  <p className="text-[10px] text-slate-400">Toll Free 24/7</p>
+                </div>
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                  <span className="text-xl block mb-1">🏛️</span>
+                  <h4 className="text-xs font-black text-slate-900">Agri Dept Maharashtra</h4>
+                  <p className="text-xs font-bold text-brand-700 mt-1">1800-233-4000</p>
+                  <p className="text-[10px] text-slate-400">Official Directorate</p>
+                </div>
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                  <span className="text-xl block mb-1">✉️</span>
+                  <h4 className="text-xs font-black text-slate-900">Support Email</h4>
+                  <p className="text-xs font-bold text-brand-700 mt-1">support@mahacropguard.in</p>
+                  <p className="text-[10px] text-slate-400">SIH Team Oblivion</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </main>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-6 px-6 text-xs border-t border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-white font-bold">
+            <span>🌿</span> Maha Crop Guard • SIH 2026
+          </div>
+          <div>
+            © 2026 Maha Crop Guard | Developed by <strong className="text-emerald-400">Team Oblivion</strong> for SIH
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
