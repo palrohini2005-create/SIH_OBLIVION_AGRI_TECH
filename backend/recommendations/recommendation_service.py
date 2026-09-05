@@ -1,4 +1,5 @@
-from recommendations.advisory_data import ADVISORY_DATA
+
+from backend.recommendations.advisory_data import ADVISORY_DATA
 
 
 def get_recommendation(disease, risk_level, forecast_risk_level=None):
@@ -31,3 +32,4 @@ def get_recommendation(disease, risk_level, forecast_risk_level=None):
         "monitoring": advisory["monitoring"],
         "treatment": advisory["treatment"]
     }
+

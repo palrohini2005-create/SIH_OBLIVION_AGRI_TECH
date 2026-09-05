@@ -1,4 +1,5 @@
-from risk.disease_rules import DISEASE_RULES
+
+from backend.risk.disease_rules import DISEASE_RULES
 
 
 def calculate_risk(
@@ -88,24 +89,18 @@ def calculate_forecast_risk(disease, forecast):
             max_score = result["risk_score"]
             max_index = i
 
-    # Calculate improved risk trend
     first_score = scores[0]
     last_score = scores[-1]
 
     peak_index = scores.index(max_score)
 
-    # Check whether the forecast reaches a significantly higher
-    # risk level than the starting condition.
     if max_score >= first_score + 20:
 
-        # Risk rises and later falls from the peak
         if peak_index > 0 and peak_index < len(scores) - 1:
             if last_score <= max_score - 20:
                 trend = "PEAKING"
             else:
                 trend = "INCREASING"
-
-        # Peak occurs near the end of the forecast
         else:
             trend = "INCREASING"
 
@@ -115,7 +110,6 @@ def calculate_forecast_risk(disease, forecast):
     else:
         trend = "STABLE"
 
-    # Risk level based on the highest forecast risk
     if max_score >= 70:
         risk_level = "HIGH"
     elif max_score >= 40:
@@ -129,3 +123,4 @@ def calculate_forecast_risk(disease, forecast):
         "forecast_time": forecast["time"][max_index],
         "trend": trend
     }
+
