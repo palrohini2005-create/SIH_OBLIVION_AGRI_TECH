@@ -61,3 +61,39 @@ def calculate_risk(
         "risk_level": risk_level,
         "factors": factors
     }
+
+
+def calculate_forecast_risk(disease, forecast):
+
+    if disease not in DISEASE_RULES:
+        return {"error": "Disease not supported"}
+
+    max_score = 0
+    max_index = 0
+
+    for i in range(len(forecast["temperature"])):
+
+        result = calculate_risk(
+            disease,
+            forecast["temperature"][i],
+            forecast["humidity"][i],
+            forecast["rainfall"][i],
+            forecast["rain_probability"][i]
+        )
+
+        if result["risk_score"] > max_score:
+            max_score = result["risk_score"]
+            max_index = i
+
+    if max_score >= 70:
+        risk_level = "HIGH"
+    elif max_score >= 40:
+        risk_level = "MEDIUM"
+    else:
+        risk_level = "LOW"
+
+    return {
+        "risk_score": max_score,
+        "risk_level": risk_level,
+        "forecast_hour": max_index
+    }

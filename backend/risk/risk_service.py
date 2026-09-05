@@ -1,5 +1,5 @@
 from backend.weather.weather_service import get_weather
-from backend.risk.risk_engine import calculate_risk
+from backend.risk.risk_engine import calculate_risk, calculate_forecast_risk
 from backend.recommendations.recommendation_service import get_recommendation
 
 
@@ -21,6 +21,14 @@ def assess_disease_risk(disease, latitude, longitude):
     if "error" in risk:
         return risk
 
+    forecast_risk = calculate_forecast_risk(
+        disease,
+        weather["forecast"]
+    )
+
+    if "error" in forecast_risk:
+        return forecast_risk
+
     recommendation = get_recommendation(
         disease,
         risk["risk_level"]
@@ -29,5 +37,6 @@ def assess_disease_risk(disease, latitude, longitude):
     return {
         "weather": weather,
         "risk": risk,
+        "forecast_risk": forecast_risk,
         "recommendation": recommendation
     }

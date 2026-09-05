@@ -9,8 +9,8 @@ def get_weather(latitude, longitude):
         "latitude": latitude,
         "longitude": longitude,
         "current": "temperature_2m,relative_humidity_2m,rain",
-        "hourly": "precipitation_probability",
-        "forecast_days": 1
+        "hourly": "temperature_2m,relative_humidity_2m,precipitation_probability,rain",
+        "forecast_days": 2
     }
 
     try:
@@ -31,7 +31,13 @@ def get_weather(latitude, longitude):
             "temperature": data["current"]["temperature_2m"],
             "humidity": data["current"]["relative_humidity_2m"],
             "rainfall": data["current"]["rain"],
-            "rain_probability": data["hourly"]["precipitation_probability"][0]
+            "rain_probability": data["hourly"]["precipitation_probability"][0],
+            "forecast": {
+                "temperature": data["hourly"]["temperature_2m"][:24],
+                "humidity": data["hourly"]["relative_humidity_2m"][:24],
+                "rain_probability": data["hourly"]["precipitation_probability"][:24],
+                "rainfall": data["hourly"]["rain"][:24]
+            }
         }
 
     except requests.RequestException:
