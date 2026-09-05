@@ -1,4 +1,4 @@
-from backend.risk.disease_rules import DISEASE_RULES
+from risk.disease_rules import DISEASE_RULES
 
 
 def calculate_risk(

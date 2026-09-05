@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from backend.risk.risk_service import assess_disease_risk
-from backend.risk.disease_rules import DISEASE_RULES
+from risk.risk_service import assess_disease_risk
+from risk.disease_rules import DISEASE_RULES
 
 
 app = FastAPI(title="AgriTech Risk Management API")
