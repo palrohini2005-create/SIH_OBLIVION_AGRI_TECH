@@ -1,0 +1,37 @@
+﻿symptom_id,disease_id,disease_name,symptom
+S001,D001,Rice Blast,Spindle-shaped spots appear on leaves
+S002,D001,Rice Blast,Brown or reddish borders form around lesions
+S003,D001,Rice Blast,Spots develop gray or whitish centers
+S004,D002,Rice Brown Spot,Small brown circular spots appear on leaves
+S005,D002,Rice Brown Spot,Spots develop gray or brown centers
+S006,D002,Rice Brown Spot,Leaves may turn yellow and dry
+S007,D003,Bacterial Leaf Blight,Yellowish-white lesions spread along leaves
+S008,D003,Bacterial Leaf Blight,Leaves gradually dry from the tip downward
+S009,D003,Bacterial Leaf Blight,Severely infected plants may wilt
+S010,D004,Early Blight,Dark brown spots appear on older leaves
+S011,D004,Early Blight,Leaves become yellow around infected areas
+S012,D004,Early Blight,Spots often show concentric ring patterns
+S013,D005,Late Blight,Dark water-soaked spots appear on leaves
+S014,D005,Late Blight,Brown or reddish-brown lesions may develop on tubers
+S015,D005,Late Blight,White fungal growth may appear under leaves in humid conditions
+S016,D006,Blackleg,Stems develop dark black lesions near the base
+S017,D006,Blackleg,Leaves may become yellow and wilt
+S018,D006,Blackleg,Plants may become stunted or die
+S019,D007,Early Blight,Brown spots appear on older leaves
+S020,D007,Early Blight,Spots show characteristic concentric rings
+S021,D007,Early Blight,Leaves develop yellow areas around lesions
+S022,D008,Late Blight,White growth may appear on the underside of leaves
+S023,D008,Late Blight,Leaves rapidly turn brown and die
+S024,D008,Late Blight,Large dark water-soaked lesions appear on leaves
+S025,D009,Bacterial Spot,Small dark spots appear on leaves
+S026,D009,Bacterial Spot,Severe infection causes leaf yellowing and drop
+S027,D009,Bacterial Spot,Spots may develop yellow halos
+S028,D010,Bollworm,Holes appear in flower buds and bolls
+S029,D010,Bollworm,Seeds and developing fibers may be damaged
+S030,D010,Bollworm,"Caterpillars feed on buds, flowers and developing bolls"
+S031,D011,Cotton Leaf Curl Virus,Leaves become thickened and distorted
+S032,D011,Cotton Leaf Curl Virus,Plants may become stunted with reduced growth
+S033,D011,Cotton Leaf Curl Virus,Leaves curl upward or downward
+S034,D012,Fusarium Wilt,"Yellowing of leaves, often starting with older leaves"
+S035,D012,Fusarium Wilt,Leaves may wilt and droop during infection
+S036,D012,Fusarium Wilt,Brown discoloration may appear inside the stem

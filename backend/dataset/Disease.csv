@@ -1,0 +1,13 @@
+﻿disease_id,crop_id,crop_name,disease_name,scientific_name,causal_agent,description
+D001,1,Rice,Rice Blast,Magnaporthe oryzae,Fungus,"spindle-shaped lesions with reddish-brown borders on leaves, stems, and panicles, leading to major yield loss."
+D002,1,Rice,Rice Brown Spot,Bipolaris oryzae,Fungus,"Manifests as small, oval, dark brown spots on leaves and glumes, often associated with nutrient-deficient soil."
+D003,1,Rice,Bacterial Leaf Blight,Xanthomonas oryzae,Bacterium,yellowing and drying of leaves starting from the tips along the margins; leaves turn white to gray.
+D004,2,Potato,Potato Early Blight,Alternaria solani,Fungus,dark brown to black circular spots with distinct target-like concentric rings on older foliage.
+D005,2,Potato,Potato Late Blight,Phytophthora infestans,Oomycete / Water Mold,"Destructive water-soaked spots on leaf tips and edges that turn black rapidly, accompanied by white fungal growth underneath in humid conditions."
+D006,2,Potato,Black Scurf & Stem Canker,Rhizoctonia solani,Fungus," dark, irregular black lumps on potato tubers and sunken brown lesions on young emerging stems."
+D007,3,Tomato,Tomato Early Blight,Alternaria solani,Fungus," Target-spot pattern yellowing and brown leaf spots, leading to premature leaf drop and fruit rot near the stem."
+D008,3,Tomato,Tomato Late Blight,Phytophthora infestans,Oomycete / Water Mold,"Rapidly rots leaves, stems, and fruits, creating large greasy brown patches and fuzzy growth in wet weather."
+D009,3,Tomato,Septoria Leaf Spot,Septoria lycopersici,Fungus,"Small, circular leaf spots with gray/tan centers and dark brown margins; causes lower leaves to yellow and drop."
+D010,4,Cotton,Cotton Bollworm,Helicoverpa armigera,Insect pest,"Larvae bore into cotton bolls, feeding inside and causing premature boll dropping and lint destruction."
+D011,4,Cotton,Cotton Leaf Curl,Begomovirus,Begomovirus,"upward/downward curling of leaves, thickened veins, and leafy enations (outgrowths) under the leaves."
+D012,4,Cotton,Fusarium Wilt,Fusarium oxysporum f. sp. vasinfectum,Fungus,"Soil-borne fungus that clogs the plant's vascular tissue, causing yellowing, drooping, and systemic wilting."
