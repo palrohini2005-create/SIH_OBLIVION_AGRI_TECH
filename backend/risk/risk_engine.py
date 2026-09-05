@@ -15,24 +15,37 @@ def calculate_risk(
     rules = DISEASE_RULES[disease]
 
     score = 0
+    factors = []
 
-    # Temperature score - 25 points
+    # Temperature - 25 points
     min_temp, max_temp = rules["temperature"]
 
     if min_temp <= temperature <= max_temp:
         score += 25
+        factors.append("Temperature is suitable for disease development")
+    else:
+        factors.append("Temperature is outside the high-risk range")
 
-    # Humidity score - 35 points
+    # Humidity - 35 points
     if humidity >= rules["humidity"]:
         score += 35
+        factors.append("Humidity is high")
+    else:
+        factors.append("Humidity is below the risk threshold")
 
-    # Rainfall score - 20 points
+    # Rainfall - 20 points
     if rainfall >= rules["rainfall"]:
         score += 20
+        factors.append("Recent rainfall increases disease risk")
+    else:
+        factors.append("Rainfall is below the risk threshold")
 
-    # Rain probability score - 20 points
+    # Rain probability - 20 points
     if rain_probability >= rules["rain_probability"]:
         score += 20
+        factors.append("High probability of rain")
+    else:
+        factors.append("Rain probability is low")
 
     # Risk level
     if score >= 70:
@@ -45,5 +58,6 @@ def calculate_risk(
     return {
         "disease": disease,
         "risk_score": score,
-        "risk_level": risk_level
+        "risk_level": risk_level,
+        "factors": factors
     }
