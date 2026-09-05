@@ -30,9 +30,10 @@ def assess_disease_risk(disease, latitude, longitude):
         return forecast_risk
 
     recommendation = get_recommendation(
-        disease,
-        risk["risk_level"]
-    )
+    disease,
+    risk["risk_level"],
+    forecast_risk["risk_level"]
+)
 
     return {
         "weather": weather,
