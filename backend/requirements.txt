@@ -1,3 +1,9 @@
 requests
 fastapi
 uvicorn
+SQLAlchemy
+pydantic
+starlette
+typing-inspection
+typing_extensions
+pandas
