@@ -35,6 +35,9 @@ def bad_request(message: str) -> ApiError:
 def not_logged_in() -> ApiError:
     return ApiError(status.HTTP_401_UNAUTHORIZED, "Not logged in.")
 
+def forbidden(message: str) -> ApiError:
+        return ApiError(status.HTTP_403_FORBIDDEN, message)
+
 
 def not_found(message: str) -> ApiError:
     return ApiError(status.HTTP_404_NOT_FOUND, message)
@@ -68,8 +71,10 @@ def register_error_handlers(app: FastAPI) -> None:
         if error.status_code == status.HTTP_404_NOT_FOUND and request.url.path.startswith("/api/"):
             message = (
                 f"{request.method} {request.url.path} is not implemented in this backend yet. "
-                "See the table in python_backend/README.md."
             )
+
+        if error.status_code == status.HTTP_403_FORBIDDEN:
+            message = "You do not have permission to access this resource."
 
         return JSONResponse(
             status_code=error.status_code,
