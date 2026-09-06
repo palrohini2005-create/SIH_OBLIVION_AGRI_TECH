@@ -7,3 +7,5 @@ starlette
 typing-inspection
 typing_extensions
 pandas
+passlib[bcrypt]
+jwt
