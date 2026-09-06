@@ -1,8 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from fastapi import Response
 from app import models
 from app.common.errors import bad_request
+from app.auth.session import end_session
 
 MINIMUM_PASSWORD_LENGTH = 8
 
@@ -38,3 +40,8 @@ def sign_up(db: Session, email: str, password: str, accepted_terms: bool) -> mod
     if not accepted_terms:
         raise bad_request("Please accept the Terms and Privacy Policy to create an account.")
     return sign_in(db, email, password)
+
+def sign_out(response: Response) -> dict:
+    """Clear the session cookie and sign the user out."""
+    end_session(response)
+    return {"ok": True, "message": "Signed out successfully"}
