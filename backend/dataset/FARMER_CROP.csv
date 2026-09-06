@@ -1,0 +1,5 @@
+﻿disease_id,disease_name,crop,symptoms,causal_agent,treatment,prevention
+D007,Tomato Early Blight,Tomato,"Target-spot pattern yellowing and brown leaf spots, leading to premature leaf drop and fruit rot near the stem.",Fungus,Apply combination systemic fungicides like Noriko T3 by Parijat or Katyayani Dr. Zole Fungicide. Use microbial solutions like Multiplex Bio-Jodi or Vijaya PBT.,
+D008,Tomato Late Blight,Tomato,"Rapidly rots leaves, stems, and fruits, creating large greasy brown patches and fuzzy growth in wet weather.",Oomycete / Water Mold,Apply combination systemic fungicides like Noriko T3 by Parijat or Katyayani Dr. Zole Fungicide. Use microbial solutions like Multiplex Bio-Jodi or Vijaya PBT.,
+D009,Tomato Septoria Leaf Spot,Tomato,"Small, circular leaf spots with gray/tan centers and dark brown margins; causes lower leaves to yellow and drop.",Fungus,"Copper + Mancozeb tank mix, Streptocycline or Kasugamycin as a foliar spray.",
+D000,Healthy Tomato Leaf,Tomato,HEALTHY,NOTHING ,NOTHING,NOTHING
