@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.database import SessionLocal
+from app.core.database import SessionLocal
 from app.models import Crop
 
 crop_bp = Blueprint("crop", __name__)

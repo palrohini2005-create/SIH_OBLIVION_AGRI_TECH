@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from app.database import SessionLocal
+from app.core.database import SessionLocal
 from app.models import (
     AnalysisHistory,
     User,

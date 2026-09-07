@@ -8,7 +8,7 @@ behaves identically whichever backend it is talking to. What it holds is only a
 marker: real authentication would issue something signed, and check it here.
 """
 
-from fastapi import Depends, Request, Response, HTTPException
+from fastapi import Depends, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 

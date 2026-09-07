@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.database import SessionLocal
+from app.core.database import SessionLocal
 from app.models import Disease
 
 disease_bp = Blueprint("disease", __name__)

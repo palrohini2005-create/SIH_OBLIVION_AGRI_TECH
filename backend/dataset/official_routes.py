@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-from app.database import SessionLocal
+from app.core.database import SessionLocal
 from app.models import User, AnalysisHistory, Crop, Disease
 
 official_bp = Blueprint("official", __name__)
