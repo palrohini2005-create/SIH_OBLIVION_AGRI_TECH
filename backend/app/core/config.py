@@ -16,8 +16,7 @@ class Settings(BaseSettings):
 
     # Where SQLAlchemy keeps the database. Relative paths are resolved against
     # the python_backend folder, so running from anywhere finds the same file.
-    database_url: str = f"sqlite:///{BASE_DIR / 'portal.db'}"
-
+    database_url: str = "mysql+pymysql://root:rp%4034al@localhost/maha_crop_guard"
     # Origins allowed to call this API with cookies. Must be exact: a wildcard
     # is not permitted alongside credentials.
     cors_origins: list[str] = ["http://127.0.0.1:3000", "http://localhost:3000"]
