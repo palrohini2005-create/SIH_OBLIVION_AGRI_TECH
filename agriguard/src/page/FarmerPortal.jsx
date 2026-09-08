@@ -1,3 +1,4 @@
+```jsx
 import React, { useState, useEffect } from "react";
 import {
   Sprout,
@@ -25,20 +26,26 @@ export default function FarmerPortal({ farmer, onLogout }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [diagnosis, setDiagnosis] = useState(null);
   const [loading, setLoading] = useState(false);
-const [weather, setWeather] = useState(null);
+  const [weather, setWeather] = useState(null);
 
-useEffect(() => {
-  fetch("http://localhost:5000/api/weather")
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        setWeather(data);
-      }
-    })
-    .catch((error) => {
-      console.error("Weather error:", error);
-    });
-}, []);
+  // Crop Alerts
+  const [cropAlerts, setCropAlerts] = useState(null);
+  const [alertsLoading, setAlertsLoading] = useState(true);
+  const [alertsError, setAlertsError] = useState(null);
+
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/weather")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setWeather(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Weather error:", error);
+      });
+  }, []);
 
 
   const farmerData = farmer || {
@@ -51,16 +58,65 @@ useEffect(() => {
     farmArea: "3.5 Acres"
   };
 
+
+  // Fetch crop disease alerts from our FastAPI backend
+  useEffect(() => {
+
+    const crop = farmerData.crop || "Tomato";
+
+    // Prototype location: Nashik
+    const latitude = 20.0059;
+    const longitude = 73.7897;
+
+    setAlertsLoading(true);
+
+    fetch(
+      `http://127.0.0.1:8000/crop-alerts?crop=${encodeURIComponent(
+        crop
+      )}&latitude=${latitude}&longitude=${longitude}&farmer_name=${encodeURIComponent(
+        farmerData.name
+      )}&phone_number=${encodeURIComponent(farmerData.phone)}`
+    )
+      .then((res) => {
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch crop alerts");
+        }
+
+        return res.json();
+      })
+      .then((data) => {
+
+        setCropAlerts(data);
+        setAlertsError(null);
+
+      })
+      .catch((error) => {
+
+        console.error("Crop alerts error:", error);
+        setAlertsError("Unable to load crop alerts.");
+
+      })
+      .finally(() => {
+
+        setAlertsLoading(false);
+
+      });
+
+  }, [farmerData.crop, farmerData.name, farmerData.phone]);
+
+
   const handleImageUpload = (e) => {
+
     const file = e.target.files[0];
 
     if (file) {
       setSelectedImage(URL.createObjectURL(file));
       setDiagnosis(null);
     }
+
   };
 
-  
 
   const runDiagnosis = () => {
 
@@ -84,9 +140,12 @@ useEffect(() => {
       });
 
     }, 1800);
+
   };
 
+
   return (
+
     <div className="min-h-screen bg-slate-50">
 
       {/* TOP NAVBAR */}
@@ -102,6 +161,7 @@ useEffect(() => {
             </div>
 
             <div>
+
               <h1 className="font-black text-lg text-emerald-950">
                 Maha Crop Guard
               </h1>
@@ -109,13 +169,16 @@ useEffect(() => {
               <p className="text-[10px] text-emerald-600 font-semibold">
                 Farmer Portal
               </p>
+
             </div>
 
           </div>
 
+
           <div className="flex items-center gap-4">
 
             <div className="hidden sm:block text-right">
+
               <p className="text-xs font-bold text-slate-800">
                 {farmerData.name}
               </p>
@@ -123,18 +186,24 @@ useEffect(() => {
               <p className="text-[10px] text-slate-500">
                 {farmerData.village}, {farmerData.district}
               </p>
+
             </div>
+
 
             <div className="bg-emerald-100 text-emerald-700 p-2 rounded-full">
               <User className="w-5 h-5" />
             </div>
 
+
             <button
               onClick={onLogout}
               className="text-red-600 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1"
             >
+
               <LogOut className="w-4 h-4" />
+
               Logout
+
             </button>
 
           </div>
@@ -168,6 +237,7 @@ useEffect(() => {
         {/* SIDEBAR + CONTENT */}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
 
           {/* SIDEBAR */}
 
@@ -222,11 +292,13 @@ useEffect(() => {
 
           <main className="lg:col-span-9">
 
+
             {/* DASHBOARD */}
 
             {activeSection === "dashboard" && (
 
               <div className="space-y-6">
+
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
@@ -250,7 +322,15 @@ useEffect(() => {
 
                   <StatCard
                     title="Active Alerts"
-                    value="2"
+                    value={
+                      cropAlerts
+                        ? cropAlerts.alerts.filter(
+                            (alert) =>
+                              alert.alert_severity === "HIGH" ||
+                              alert.alert_severity === "CRITICAL"
+                          ).length
+                        : "..."
+                    }
                     icon={<Bell />}
                   />
 
@@ -264,6 +344,7 @@ useEffect(() => {
                   <div className="flex justify-between items-center">
 
                     <div>
+
                       <h3 className="font-bold text-lg">
                         Today's Weather
                       </h3>
@@ -271,6 +352,7 @@ useEffect(() => {
                       <p className="text-xs text-slate-500">
                         {farmerData.district}, Maharashtra
                       </p>
+
                     </div>
 
                     <CloudSun className="text-amber-500" />
@@ -283,23 +365,31 @@ useEffect(() => {
                     <WeatherItem
                       icon={<Thermometer />}
                       title="Temperature"
-                      value={weather ? `${weather.temperature}°C` : "Loading..."} 
+                      value={
+                        weather
+                          ? `${weather.temperature}°C`
+                          : "Loading..."
+                      }
                     />
 
                     <WeatherItem
                       icon={<Droplets />}
                       title="Humidity"
-                       value={weather ? `${weather.humidity}%` : "Loading..."} 
+                      value={
+                        weather
+                          ? `${weather.humidity}%`
+                          : "Loading..."
+                      }
                     />
 
                     <WeatherItem
                       icon={<CloudSun />}
                       title="Rain Risk"
-                       value={
-    weather
-      ? `${weather.rain_probability}%`
-      : "Loading..."
-  } 
+                      value={
+                        weather
+                          ? `${weather.rain_probability}%`
+                          : "Loading..."
+                      }
                     />
 
                   </div>
@@ -307,7 +397,7 @@ useEffect(() => {
                 </div>
 
 
-                {/* ALERT */}
+                {/* REAL ALERT SUMMARY */}
 
                 <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
 
@@ -315,16 +405,58 @@ useEffect(() => {
 
                     <AlertTriangle className="text-red-600" />
 
-                    <div>
+                    <div className="flex-1">
 
                       <h3 className="font-bold text-red-800">
                         Disease Risk Alert
                       </h3>
 
-                      <p className="text-xs text-red-700 mt-1">
-                        High fungal disease risk detected within your
-                        agricultural region.
-                      </p>
+                      {alertsLoading ? (
+
+                        <p className="text-xs text-red-700 mt-1">
+                          Checking disease risks for your crop...
+                        </p>
+
+                      ) : alertsError ? (
+
+                        <p className="text-xs text-red-700 mt-1">
+                          {alertsError}
+                        </p>
+
+                      ) : cropAlerts && cropAlerts.alerts.length > 0 ? (
+
+                        <div className="mt-2 space-y-1">
+
+                          {cropAlerts.alerts
+                            .filter(
+                              (alert) =>
+                                alert.alert_severity === "HIGH" ||
+                                alert.alert_severity === "CRITICAL"
+                            )
+                            .map((alert) => (
+
+                              <p
+                                key={alert.disease}
+                                className="text-xs text-red-700"
+                              >
+                                <strong>
+                                  {formatDiseaseName(alert.disease)}
+                                </strong>
+                                {" — "}
+                                {alert.risk_score}% risk
+                              </p>
+
+                            ))}
+
+                        </div>
+
+                      ) : (
+
+                        <p className="text-xs text-red-700 mt-1">
+                          No significant disease risk detected.
+                        </p>
+
+                      )}
 
                     </div>
 
@@ -392,6 +524,7 @@ useEffect(() => {
 
                   )}
 
+
                   <input
                     id="cropUpload"
                     type="file"
@@ -400,13 +533,16 @@ useEffect(() => {
                     className="hidden"
                   />
 
+
                   <label
                     htmlFor="cropUpload"
                     className="inline-block mt-4 bg-emerald-700 text-white px-5 py-3 rounded-xl text-xs font-bold cursor-pointer"
                   >
+
                     {selectedImage
                       ? "Change Image"
                       : "Upload Crop Image"}
+
                   </label>
 
                 </div>
@@ -444,6 +580,7 @@ useEffect(() => {
                         </h3>
 
                       </div>
+
 
                       <div className="text-right">
 
@@ -511,9 +648,11 @@ useEffect(() => {
                   Disease reports around your farming area.
                 </p>
 
+
                 <div className="mt-5 h-100 bg-slate-200 rounded-2xl relative overflow-hidden">
 
                   <div className="absolute inset-0 bg-linear-to-br from-emerald-100 via-slate-200 to-blue-100" />
+
 
                   <MapMarker
                     top="35%"
@@ -532,6 +671,7 @@ useEffect(() => {
                     left="70%"
                     disease="Early Blight"
                   />
+
 
                   <div className="absolute bottom-4 left-4 bg-white rounded-xl p-3 shadow text-xs">
 
@@ -552,33 +692,117 @@ useEffect(() => {
             )}
 
 
-            {/* ALERTS */}
+            {/* REAL ALERTS */}
 
             {activeSection === "alerts" && (
 
               <div className="space-y-4">
 
-                <h2 className="text-xl font-black">
-                  Alerts & Notifications
-                </h2>
+                <div className="flex justify-between items-center">
 
-                <AlertCard
-                  title="High Fungal Risk"
-                  text="Weather conditions are favorable for fungal diseases."
-                  type="danger"
-                />
+                  <div>
 
-                <AlertCard
-                  title="Disease Nearby"
-                  text="Late Blight reports detected within 3 km of your area."
-                  type="warning"
-                />
+                    <h2 className="text-xl font-black">
+                      Alerts & Notifications
+                    </h2>
 
-                <AlertCard
-                  title="Weather Update"
-                  text="Rain expected tomorrow. Avoid spraying pesticides before rainfall."
-                  type="info"
-                />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Disease risks detected for your {farmerData.crop}.
+                    </p>
+
+                  </div>
+
+                  {cropAlerts && (
+
+                    <div className="text-right">
+
+                      <p className="text-[10px] text-slate-500">
+                        Total Alerts
+                      </p>
+
+                      <p className="font-black text-lg">
+                        {cropAlerts.alerts.length}
+                      </p>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+
+                {alertsLoading && (
+
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+
+                    <p className="text-sm font-bold text-slate-600">
+                      Checking crop disease risks...
+                    </p>
+
+                    <p className="text-xs text-slate-400 mt-1">
+                      Please wait while weather conditions are analyzed.
+                    </p>
+
+                  </div>
+
+                )}
+
+
+                {alertsError && !alertsLoading && (
+
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+
+                    <p className="text-sm font-bold text-red-800">
+                      Unable to load alerts
+                    </p>
+
+                    <p className="text-xs text-red-700 mt-1">
+                      {alertsError}
+                    </p>
+
+                  </div>
+
+                )}
+
+
+                {cropAlerts &&
+                  cropAlerts.alerts.map((alert) => (
+
+                    <DynamicAlertCard
+                      key={alert.disease}
+                      alert={alert}
+                    />
+
+                  ))}
+
+
+                {cropAlerts &&
+                  cropAlerts.alerts.length === 0 &&
+                  !alertsLoading && (
+
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+
+                      <div className="flex gap-3">
+
+                        <CheckCircle className="text-emerald-600" />
+
+                        <div>
+
+                          <h3 className="font-bold text-emerald-800">
+                            No Disease Alerts
+                          </h3>
+
+                          <p className="text-xs text-emerald-700 mt-1">
+                            No significant disease risk was detected for your crop.
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  )}
 
               </div>
 
@@ -594,6 +818,7 @@ useEffect(() => {
                 <h2 className="text-xl font-black mb-5">
                   Crop Scan History
                 </h2>
+
 
                 <div className="overflow-x-auto">
 
@@ -613,6 +838,7 @@ useEffect(() => {
 
                     </thead>
 
+
                     <tbody>
 
                       <tr className="border-b">
@@ -627,6 +853,7 @@ useEffect(() => {
                         </td>
 
                       </tr>
+
 
                       <tr className="border-b">
 
@@ -662,19 +889,38 @@ useEffect(() => {
                   Farmer Profile
                 </h2>
 
+
                 <div className="grid md:grid-cols-2 gap-4 mt-6">
 
-                  <ProfileItem title="Name" value={farmerData.name} />
+                  <ProfileItem
+                    title="Name"
+                    value={farmerData.name}
+                  />
 
-                  <ProfileItem title="Mobile" value={farmerData.phone} />
+                  <ProfileItem
+                    title="Mobile"
+                    value={farmerData.phone}
+                  />
 
-                  <ProfileItem title="Village" value={farmerData.village} />
+                  <ProfileItem
+                    title="Village"
+                    value={farmerData.village}
+                  />
 
-                  <ProfileItem title="District" value={farmerData.district} />
+                  <ProfileItem
+                    title="District"
+                    value={farmerData.district}
+                  />
 
-                  <ProfileItem title="State" value={farmerData.state} />
+                  <ProfileItem
+                    title="State"
+                    value={farmerData.state}
+                  />
 
-                  <ProfileItem title="Crop" value={farmerData.crop} />
+                  <ProfileItem
+                    title="Crop"
+                    value={farmerData.crop}
+                  />
 
                   <ProfileItem
                     title="Farm Area"
@@ -694,6 +940,7 @@ useEffect(() => {
       </div>
 
     </div>
+
   );
 }
 
@@ -721,6 +968,7 @@ function PortalButton({ icon, text, active, onClick }) {
       {text}
 
     </button>
+
   );
 }
 
@@ -732,9 +980,11 @@ function StatCard({ title, value, icon }) {
     <div className="bg-white rounded-2xl border border-slate-200 p-4">
 
       <div className="text-emerald-600 mb-2">
+
         {React.cloneElement(icon, {
           className: "w-5 h-5"
         })}
+
       </div>
 
       <p className="text-[10px] text-slate-500">
@@ -746,6 +996,7 @@ function StatCard({ title, value, icon }) {
       </h3>
 
     </div>
+
   );
 }
 
@@ -757,9 +1008,11 @@ function WeatherItem({ icon, title, value }) {
     <div className="bg-slate-50 rounded-xl p-4">
 
       <div className="text-emerald-600">
+
         {React.cloneElement(icon, {
           className: "w-5 h-5"
         })}
+
       </div>
 
       <p className="text-[10px] text-slate-500 mt-2">
@@ -771,6 +1024,7 @@ function WeatherItem({ icon, title, value }) {
       </p>
 
     </div>
+
   );
 }
 
@@ -798,6 +1052,7 @@ function Recommendation({ icon, title, value }) {
       </p>
 
     </div>
+
   );
 }
 
@@ -822,42 +1077,165 @@ function MapMarker({ top, left, disease }) {
       </div>
 
     </div>
+
   );
 }
 
 
-function AlertCard({ title, text, type }) {
+/* Convert backend disease ID into readable name */
+
+function formatDiseaseName(disease) {
+
+  return disease
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+}
+
+
+/* Dynamic Alert Card */
+
+function DynamicAlertCard({ alert }) {
+
+  const severity = alert.alert_severity;
 
   const styles = {
-    danger: "bg-red-50 border-red-200 text-red-800",
-    warning: "bg-amber-50 border-amber-200 text-amber-800",
-    info: "bg-blue-50 border-blue-200 text-blue-800"
+
+    CRITICAL:
+      "bg-red-100 border-red-300 text-red-900",
+
+    HIGH:
+      "bg-red-50 border-red-200 text-red-800",
+
+    MEDIUM:
+      "bg-amber-50 border-amber-200 text-amber-800",
+
+    LOW:
+      "bg-emerald-50 border-emerald-200 text-emerald-800"
+
   };
+
+
+  const iconStyles = {
+
+    CRITICAL: "text-red-700",
+
+    HIGH: "text-red-600",
+
+    MEDIUM: "text-amber-600",
+
+    LOW: "text-emerald-600"
+
+  };
+
 
   return (
 
-    <div className={`p-5 rounded-2xl border ${styles[type]}`}>
+    <div
+      className={`p-5 rounded-2xl border ${
+        styles[severity] || styles.LOW
+      }`}
+    >
 
       <div className="flex gap-3">
 
-        <Bell className="w-5 h-5" />
+        <Bell
+          className={`w-5 h-5 ${
+            iconStyles[severity] || iconStyles.LOW
+          }`}
+        />
 
-        <div>
 
-          <h3 className="font-bold text-sm">
-            {title}
-          </h3>
+        <div className="flex-1">
 
-          <p className="text-xs mt-1">
-            {text}
+          <div className="flex justify-between items-start gap-3">
+
+            <div>
+
+              <p className="text-[10px] font-bold uppercase opacity-70">
+                {severity} Risk
+              </p>
+
+              <h3 className="font-black text-base">
+                {formatDiseaseName(alert.disease)}
+              </h3>
+
+            </div>
+
+
+            <div className="text-right">
+
+              <p className="text-xl font-black">
+                {alert.risk_score}
+              </p>
+
+              <p className="text-[9px] opacity-70">
+                Risk Score
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <p className="text-xs mt-2">
+            {alert.message}
           </p>
+
+
+          {alert.trend && (
+
+            <p className="text-[10px] font-bold mt-2">
+              Forecast trend: {alert.trend}
+            </p>
+
+          )}
+
+
+          {alert.forecast_time && (
+
+            <p className="text-[10px] mt-1 opacity-70">
+              Peak forecast: {alert.forecast_time}
+            </p>
+
+          )}
+
+
+          {alert.factors && alert.factors.length > 0 && (
+
+            <div className="mt-3">
+
+              <p className="text-[10px] font-bold uppercase opacity-70">
+                Risk Factors
+              </p>
+
+              <ul className="mt-1 space-y-1">
+
+                {alert.factors.map((factor, index) => (
+
+                  <li
+                    key={index}
+                    className="text-[10px]"
+                  >
+                    • {factor}
+                  </li>
+
+                ))}
+
+              </ul>
+
+            </div>
+
+          )}
 
         </div>
 
       </div>
 
     </div>
+
   );
+
 }
 
 
@@ -876,5 +1254,10 @@ function ProfileItem({ title, value }) {
       </p>
 
     </div>
+
   );
+
 }
+```
+
+                 
