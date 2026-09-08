@@ -1,0 +1,6 @@
+﻿crop_id,crop_name,min_temp,max_temp,ideal_temp,humidity,rain,soil_type,soil_ph,water_req,sunlight_requirement,suitable_conditions
+1,Rice ,20°C,35°C,25–30°C,70–85%,1000–2000 mm/season,Clay loam / loam,5.5–7.0,High,Full sunlight,"Warm temperature, adequate water and good nutrient availability"
+2,Potato,10°C,30°C,18–22°C,60–80%,500–700 mm/season,Loam / sandy loam,5.8–6.6,Moderate,Full sunlight,"Cool temperature, well-drained soil and adequate moisture"
+3,Tomato,18°C,30°C,20–25°C,60–80%,400–600 mm/season,Sandy loam / loam,6.0–7.0,Moderate,Full sunlight,"Warm conditions, good drainage and uniform soil moisture"
+4,Cotton,21°C,35°C,25–30°C,50–70%,500–800 mm/season,Well-drained loam / black soil,5.5–8.5,Moderate,Full sunlight,"Warm conditions, good drainage and adequate soil moisture"
+,,,,,,,,,,,
