@@ -1,4 +1,3 @@
-```jsx
 import React, { useState, useEffect } from "react";
 import {
   Sprout,
@@ -1258,6 +1257,6 @@ function ProfileItem({ title, value }) {
   );
 
 }
-```
+
 
                  
