@@ -56,3 +56,28 @@ DISEASE_RULES = {
         "rain_probability": 50
     }
 }
+
+
+# Diseases associated with each crop
+CROP_DISEASES = {
+
+    "tomato": [
+        "tomato_early_blight",
+        "tomato_late_blight"
+    ],
+
+    "rice": [
+        "rice_blast",
+        "rice_brown_spot"
+    ],
+
+    "potato": [
+        "potato_early_blight",
+        "potato_late_blight"
+    ],
+
+    "cotton": [
+        "cotton_bollworm",
+        "cotton_leaf_curl"
+    ]
+}
