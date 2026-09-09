@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-import models
+import backend.app.models as models
 from app.core.config import settings
 from app.core.database import Base, SessionLocal, engine
 
