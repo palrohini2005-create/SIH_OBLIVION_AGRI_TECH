@@ -2,10 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fastapi import Response
-from app import models
-from app.common.errors import bad_request, forbidden
-from app.auth.session import end_session
-from app.core.security import hash_password, verify_password
+from backend.app import models
+from backend.app.common.errors import bad_request, forbidden
+from backend.app.auth.session import end_session
+from backend.app.core.security import hash_password, verify_password
 
 MINIMUM_PASSWORD_LENGTH = 8
 
@@ -44,7 +44,6 @@ def sign_up(db: Session, email: str, password: str, accepted_terms: bool) -> mod
     """The real portal emails a verification link. Here the account signs in."""
     if not accepted_terms:
         raise bad_request("Please accept the Terms and Privacy Policy to create an account.")
-
     existing = db.query(models.User).filter(models.User.email == email).first()
     if existing:
         raise bad_request("Account already exists with this email.")

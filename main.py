@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.weather.router import router as weather_router
 from backend.risk.router import router as alert_router
 from backend.app.auth.router import router as auth_router
+from backend.app.ai_router import router as scan_router
 
 
 app = FastAPI(
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(weather_router)
 app.include_router(alert_router)
 app.include_router(auth_router)
+app.include_router(scan_router)
 
 @app.get("/")
 def read_root():

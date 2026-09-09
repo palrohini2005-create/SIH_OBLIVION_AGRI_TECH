@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import AdminPortal from "./page/AdminPortal.jsx";
 import FarmerPortal from "./page/FarmerPortal.jsx";
-import { 
-  Sprout, Camera, CloudSun, Users, Globe, HelpCircle, 
-  Lock, Eye, EyeOff, User, ArrowRight, ShieldCheck, 
-  MapPin, CheckCircle, Phone, Leaf, LogOut, Upload, 
+import {
+  Sprout, Camera, CloudSun, Users, Globe, HelpCircle,
+  Lock, Eye, EyeOff, User, ArrowRight, ShieldCheck,
+  MapPin, CheckCircle, Phone, Leaf, LogOut, Upload,
   RefreshCw, AlertTriangle, Thermometer, Droplets, Sun, Bot, Send, X,
-  Mail, Award, Cpu, ChevronRight, FileText, Activity, Menu, 
+  Mail, Award, Cpu, ChevronRight, FileText, Activity, Menu,
 } from 'lucide-react';
 
 
@@ -65,7 +65,7 @@ export default function App() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/register", {
+      const response = await fetch("http://localhost:8000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -77,7 +77,8 @@ export default function App() {
           password: registerPassword,
           village: registerVillage,
           district: registerDistrict,
-          state: registerState
+          state: registerState,
+
         })
       });
 
@@ -108,7 +109,7 @@ export default function App() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch("http://localhost:8000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +180,7 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/chat", {
+      const response = await fetch("http://localhost:8000/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -217,138 +218,138 @@ export default function App() {
     { name: 'Irfan Chawdhury', role: 'Frontend dev: Farmer App' }
   ];
 
- 
+
 
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-800">
-      
-      
-      
+
+
+
       {/* NAVBAR */}
       {!isLoggedIn && (
-      <header className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 px-6 py-3.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentTab('home')}>
-          <div className="flex items-center">
+        <header className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 px-6 py-3.5 flex items-center justify-between shadow-sm">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentTab('home')}>
+            <div className="flex items-center">
 
-            <img
-            src="/icon_mahacrop.png"
-            className="h-15 w-15 object-contain"/>
-            
+              <img
+                src="/icon_mahacrop.png"
+                className="h-15 w-15 object-contain" />
+
+            </div>
+            <div>
+              <span className="font-extrabold text-xl text-emerald-950 tracking-tight block leading-tight">Maha Crop Guard</span>
+              <span className="text-[11px] text-emerald-600 font-semibold tracking-wide">AI Crop Health Companion</span>
+            </div>
           </div>
-          <div>
-            <span className="font-extrabold text-xl text-emerald-950 tracking-tight block leading-tight">Maha Crop Guard</span>
-            <span className="text-[11px] text-emerald-600 font-semibold tracking-wide">AI Crop Health Companion</span>
-          </div>
-        </div>
 
-        {/* NAVIGATION LINKS */}
-        {!isLoggedIn && (
-          <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
-            <button 
-              onClick={() => setCurrentTab('home')} 
-              className={`transition ${currentTab === 'home' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
-            >
-              Home
-            </button>
-
-            {/* Features Dropdown */}
-            <div className="relative group py-2">
-              <button 
-                onClick={() => setCurrentTab('features')} 
-                className={`transition cursor-pointer ${currentTab === 'features' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
+          {/* NAVIGATION LINKS */}
+          {!isLoggedIn && (
+            <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
+              <button
+                onClick={() => setCurrentTab('home')}
+                className={`transition ${currentTab === 'home' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
               >
-                Features
+                Home
               </button>
-              <div className="absolute top-full left-0 w-72 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
-                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Prototype Capabilities</h4>
-                <ul className="space-y-2 text-xs text-slate-600">
-                  <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>AI Disease Detection & Confidence Score</span></li>
-                  <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>Pesticide & Organic Recommendations</span></li>
-                  <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>Real-time Weather & Micro-climate Alerts</span></li>
-                  <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>Official Hotline & Extension Helpline</span></li>
-                </ul>
-              </div>
-            </div>
 
-            {/* How It Works Dropdown */}
-            <div className="relative group py-2">
-              <button 
-                onClick={() => setCurrentTab('how')} 
-                className={`transition cursor-pointer ${currentTab === 'how' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
-              >
-                How It Works
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-72 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
-                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">System Workflow</h4>
-                <ol className="space-y-2 text-xs text-slate-600">
-                  <li className="flex items-start space-x-2"><span className="font-bold text-emerald-600">1.</span><span>Upload Leaf Photo or Sensor Data</span></li>
-                  <li className="flex items-start space-x-2"><span className="font-bold text-emerald-600">2.</span><span>AI Model Analyzes Pathogen Markers</span></li>
-                  <li className="flex items-start space-x-2"><span className="font-bold text-emerald-600">3.</span><span>Get Preventive Dosage & Risk Alert</span></li>
-                </ol>
-              </div>
-            </div>
-
-            {/* About Us Dropdown */}
-            <div className="relative group py-2">
-              <button 
-                onClick={() => setCurrentTab('about')} 
-                className={`transition cursor-pointer ${currentTab === 'about' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
-              >
-                About Us
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-72 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
-                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">Team Oblivion</h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  6 CSE (IoT) 3rd year students working on SIH problem statement by Govt. of Maharashtra to prevent crop loss.
-                </p>
-              </div>
-            </div>
-
-            {/* Contact Dropdown */}
-            <div className="relative group py-2">
-              <button 
-                onClick={() => setCurrentTab('contact')} 
-                className={`transition cursor-pointer ${currentTab === 'contact' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
-              >
-                Contact
-              </button>
-              <div className="absolute top-full right-0 w-64 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
-                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Government Helplines</h4>
-                <div className="space-y-1.5 text-xs text-slate-600">
-                  <p>Kisan Call Center: 1800-180-1551</p>
-                  <p>Agri Dept Maharashtra: 1800-233-4000</p>
-                  <p>support@mahacropguard.in</p>
+              {/* Features Dropdown */}
+              <div className="relative group py-2">
+                <button
+                  onClick={() => setCurrentTab('features')}
+                  className={`transition cursor-pointer ${currentTab === 'features' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
+                >
+                  Features
+                </button>
+                <div className="absolute top-full left-0 w-72 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
+                  <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Prototype Capabilities</h4>
+                  <ul className="space-y-2 text-xs text-slate-600">
+                    <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>AI Disease Detection & Confidence Score</span></li>
+                    <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>Pesticide & Organic Recommendations</span></li>
+                    <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>Real-time Weather & Micro-climate Alerts</span></li>
+                    <li className="flex items-center space-x-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span><span>Official Hotline & Extension Helpline</span></li>
+                  </ul>
                 </div>
               </div>
-            </div>
-          </nav>
-        )}
 
-        {/* HEADER CONTROLS */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer">
-            <Globe className="w-4 h-4 text-emerald-600" />
-            <span>{language}</span>
-          </div>
-          {isLoggedIn ? (
-            <button 
-              onClick={handleLogout}
-              className="flex items-center space-x-1.5 text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Logout</span>
-            </button>
-          ) : (
-            <button 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-slate-600 p-1 rounded-lg"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+              {/* How It Works Dropdown */}
+              <div className="relative group py-2">
+                <button
+                  onClick={() => setCurrentTab('how')}
+                  className={`transition cursor-pointer ${currentTab === 'how' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
+                >
+                  How It Works
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-72 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
+                  <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">System Workflow</h4>
+                  <ol className="space-y-2 text-xs text-slate-600">
+                    <li className="flex items-start space-x-2"><span className="font-bold text-emerald-600">1.</span><span>Upload Leaf Photo or Sensor Data</span></li>
+                    <li className="flex items-start space-x-2"><span className="font-bold text-emerald-600">2.</span><span>AI Model Analyzes Pathogen Markers</span></li>
+                    <li className="flex items-start space-x-2"><span className="font-bold text-emerald-600">3.</span><span>Get Preventive Dosage & Risk Alert</span></li>
+                  </ol>
+                </div>
+              </div>
+
+              {/* About Us Dropdown */}
+              <div className="relative group py-2">
+                <button
+                  onClick={() => setCurrentTab('about')}
+                  className={`transition cursor-pointer ${currentTab === 'about' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
+                >
+                  About Us
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-72 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
+                  <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">Team Oblivion</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    6 CSE (IoT) 3rd year students working on SIH problem statement by Govt. of Maharashtra to prevent crop loss.
+                  </p>
+                </div>
+              </div>
+
+              {/* Contact Dropdown */}
+              <div className="relative group py-2">
+                <button
+                  onClick={() => setCurrentTab('contact')}
+                  className={`transition cursor-pointer ${currentTab === 'contact' ? 'text-emerald-700 font-bold border-b-2 border-emerald-600 pb-1' : 'hover:text-emerald-600'}`}
+                >
+                  Contact
+                </button>
+                <div className="absolute top-full right-0 w-64 bg-white border border-slate-100 shadow-xl rounded-2xl p-4 hidden group-hover:block transition-all opacity-0 group-hover:opacity-100 z-50">
+                  <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Government Helplines</h4>
+                  <div className="space-y-1.5 text-xs text-slate-600">
+                    <p>Kisan Call Center: 1800-180-1551</p>
+                    <p>Agri Dept Maharashtra: 1800-233-4000</p>
+                    <p>support@mahacropguard.in</p>
+                  </div>
+                </div>
+              </div>
+            </nav>
           )}
-        </div>
-      </header>
+
+          {/* HEADER CONTROLS */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer">
+              <Globe className="w-4 h-4 text-emerald-600" />
+              <span>{language}</span>
+            </div>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-1.5 text-xs font-semibold text-red-600 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden text-slate-600 p-1 rounded-lg"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+        </header>
       )}
 
       {/* MOBILE MENU DROPDOWN */}
@@ -441,9 +442,8 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setRole('farmer')}
-                        className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition ${
-                          role === 'farmer' ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'
-                        }`}
+                        className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition ${role === 'farmer' ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'
+                          }`}
                       >
                         <div className="flex items-center space-x-2 font-bold text-xs mb-1"><span></span><span>Farmer</span></div>
                         <span className="text-[10px] text-slate-500">I need crop advice</span>
@@ -452,113 +452,112 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setRole('official')}
-                        className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition ${
-                          role === 'official' ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'
-                        }`}
+                        className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition ${role === 'official' ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600'
+                          }`}
                       >
                         <div className="flex items-center space-x-2 font-bold text-xs mb-1"><span></span><span>Official</span></div>
                         <span className="text-[10px] text-slate-500">Agri Department</span>
                       </button>
                     </div>
-              </div>
-               {isRegistering ? (
+                  </div>
+                  {isRegistering ? (
 
-  /* ================= REGISTER FORM ================= */
+                    /* ================= REGISTER FORM ================= */
 
-  <form onSubmit={handleRegister} className="space-y-4">
+                    <form onSubmit={handleRegister} className="space-y-4">
 
-    <div>
-      <input
-        type="text"
-        required
-        value={registerName}
-        onChange={(e) => setRegisterName(e.target.value)}
-        placeholder="Full Name"
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      />
-    </div>
+                      <div>
+                        <input
+                          type="text"
+                          required
+                          value={registerName}
+                          onChange={(e) => setRegisterName(e.target.value)}
+                          placeholder="Full Name"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
+                      </div>
 
-    <div>
-      <input
-        type="email"
-        required
-        value={registerEmail}
-        onChange={(e) => setRegisterEmail(e.target.value)}
-        placeholder="Email Address"
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      />
-    </div>
+                      <div>
+                        <input
+                          type="email"
+                          required
+                          value={registerEmail}
+                          onChange={(e) => setRegisterEmail(e.target.value)}
+                          placeholder="Email Address"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
+                      </div>
 
-    <div>
-      <input
-        type="text"
-        value={registerPhone}
-        onChange={(e) => setRegisterPhone(e.target.value)}
-        placeholder="Mobile Number"
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      />
-    </div>
+                      <div>
+                        <input
+                          type="text"
+                          value={registerPhone}
+                          onChange={(e) => setRegisterPhone(e.target.value)}
+                          placeholder="Mobile Number"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
+                      </div>
 
-    <div>
-      <input
-        type="password"
-        required
-        value={registerPassword}
-        onChange={(e) => setRegisterPassword(e.target.value)}
-        placeholder="Create Password"
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      />
-    </div>
+                      <div>
+                        <input
+                          type="password"
+                          required
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
+                          placeholder="Create Password"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
+                      </div>
 
-    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3">
 
-      <input
-        type="text"
-        value={registerVillage}
-        onChange={(e) => setRegisterVillage(e.target.value)}
-        placeholder="Village"
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      />
+                        <input
+                          type="text"
+                          value={registerVillage}
+                          onChange={(e) => setRegisterVillage(e.target.value)}
+                          placeholder="Village"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
 
-      <input
-        type="text"
-        value={registerDistrict}
-        onChange={(e) => setRegisterDistrict(e.target.value)}
-        placeholder="District"
-        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      />
+                        <input
+                          type="text"
+                          value={registerDistrict}
+                          onChange={(e) => setRegisterDistrict(e.target.value)}
+                          placeholder="District"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
 
-    </div>
+                      </div>
 
-    <button
-      type="submit"
-      className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3.5 rounded-xl text-xs"
-    >
-      Create Farmer Account
-    </button>
+                      <button
+                        type="submit"
+                        className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3.5 rounded-xl text-xs"
+                      >
+                        Create Farmer Account
+                      </button>
 
-    <button
-      type="button"
-      onClick={() => setIsRegistering(false)}
-      className="w-full text-emerald-700 font-semibold text-xs py-2"
-    >
-      Already registered? Login
-    </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsRegistering(false)}
+                        className="w-full text-emerald-700 font-semibold text-xs py-2"
+                      >
+                        Already registered? Login
+                      </button>
 
-  </form>
+                    </form>
 
-) : (
+                  ) : (
 
-  
 
-  <form onSubmit={handleLogin} className="space-y-4">
 
-    {/* YOUR EXISTING LOGIN FORM GOES HERE */}
+                    <form onSubmit={handleLogin} className="space-y-4">
 
-  </form>
+                      {/* YOUR EXISTING LOGIN FORM GOES HERE */}
 
-)}
-                  
+                    </form>
+
+                  )}
+
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div>
                       <div className="relative">
@@ -618,12 +617,12 @@ export default function App() {
                   </button>
 
                   <button
-  type="button"
-  onClick={() => setIsRegistering(true)}
-  className="w-full mt-3 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-2.5 rounded-xl text-xs transition"
->
-  New farmer? Create a new account
-</button>
+                    type="button"
+                    onClick={() => setIsRegistering(true)}
+                    className="w-full mt-3 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-2.5 rounded-xl text-xs transition"
+                  >
+                    New farmer? Create a new account
+                  </button>
                 </div>
               </div>
             </div>
@@ -688,40 +687,40 @@ export default function App() {
         {/* LOGGED IN DASHBOARD */}
 
         {isLoggedIn && role === "farmer" && (
-  <FarmerPortal
-    farmer={{
-      name: loginId || "Ramesh Patil",
-      phone: loginId || "9876543210",
-      village: "Nashik",
-      district: "Nashik",
-      state: "Maharashtra",
-      crop: "Tomato",
-      farmArea: "3.5 Acres"
-    }}
-    onLogout={handleLogout}
-  />
-)}
+          <FarmerPortal
+            farmer={{
+              name: loginId || "Ramesh Patil",
+              phone: loginId || "9876543210",
+              village: "Nashik",
+              district: "Nashik",
+              state: "Maharashtra",
+              crop: "Tomato",
+              farmArea: "3.5 Acres"
+            }}
+            onLogout={handleLogout}
+          />
+        )}
 
-{isLoggedIn && role === "official" && (
-  <AdminPortal
-    admin={{
-      name: "Agriculture Officer",
-      department: "Department of Agriculture",
-      district: "Nashik",
-      designation: "Agricultural Extension Officer"
-    }}
-    onLogout={handleLogout}
-  />
-)}
-        
+        {isLoggedIn && role === "official" && (
+          <AdminPortal
+            admin={{
+              name: "Agriculture Officer",
+              department: "Department of Agriculture",
+              district: "Nashik",
+              designation: "Agricultural Extension Officer"
+            }}
+            onLogout={handleLogout}
+          />
+        )}
 
-           
 
-                
 
-                
 
-             
+
+
+
+
+
 
         {/* FEATURES SECTION */}
         {currentTab === 'features' && (
@@ -903,17 +902,17 @@ export default function App() {
                 </div>
               ))}
 
-                {isLoading && (
-    <div className="flex justify-start">
-      <div className="p-3 rounded-2xl max-w-[80%] bg-white text-slate-500 border border-slate-200 rounded-bl-none shadow-sm italic">
-        Krishi Mitra is thinking...
-      </div>
-    </div>
-  )}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="p-3 rounded-2xl max-w-[80%] bg-white text-slate-500 border border-slate-200 rounded-bl-none shadow-sm italic">
+                    Krishi Mitra is thinking...
+                  </div>
+                </div>
+              )}
 
             </div>
 
-            
+
 
             <div className="p-3 border-t border-slate-200 bg-white rounded-b-2xl flex items-center space-x-2">
               <input

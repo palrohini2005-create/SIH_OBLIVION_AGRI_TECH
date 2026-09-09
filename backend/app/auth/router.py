@@ -8,12 +8,12 @@ and acts on by returning the user to the login screen.
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from app import models
-from app.auth import service
-from app.auth.schemas import AuthResponse, LoginRequest, MeResponse, SignupRequest, UserOut
-from app.auth.session import current_user, end_session, start_session, current_admin
-from app.common.schemas import SimpleResponse
-from app.core.database import get_db
+from backend.app import models
+from backend.app.auth import service
+from backend.app.auth.schemas import AuthResponse, LoginRequest, MeResponse, SignupRequest, UserOut
+from backend.app.auth.session import current_user, end_session, start_session, current_admin
+from backend.app.common.schemas import SimpleResponse
+from backend.app.core.database import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -28,7 +28,7 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
     return AuthResponse(user=UserOut.model_validate(user))
 
 
-@router.post("/signup", response_model=AuthResponse)
+@router.post("/register", response_model=AuthResponse)
 def signup(payload: SignupRequest, response: Response, db: Session = Depends(get_db)) -> AuthResponse:
     user = service.sign_up(db, payload.email, payload.password, payload.accepted_terms)
     start_session(response, user.email)

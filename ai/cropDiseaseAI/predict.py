@@ -4,10 +4,10 @@ import numpy as np
 from PIL import Image
 
 # Import disease information
-from disease_info import disease_info
+from ai.cropDiseaseAI.disease_info import disease_info
 
 # Import solution/advisory information
-from disease_solution import disease_solution
+from ai.cropDiseaseAI.disease_solution import disease_solution
 
 MODEL_PATH = "ai/cropDiseaseAI/models/tomato_disease_model.keras"
 model = tf.keras.models.load_model(MODEL_PATH)

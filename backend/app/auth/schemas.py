@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from app.common.schemas import ApiModel
+from backend.app.common.schemas import ApiModel
 
 class UserOut(ApiModel):
     """The signed-in account, as the front end reads it."""
@@ -11,7 +11,7 @@ class UserOut(ApiModel):
     phone_e164: str | None = None
     phone_verified: bool = False
     status: str = "active"
-    terms_accepted_current: bool = False
+    terms_accepted_current: bool = True
 
 class LoginRequest(BaseModel):
     email: str

@@ -3,7 +3,7 @@ from collections.abc import Generator
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from app.core.config import settings
+from backend.app.core.config import settings
 
 engine = create_engine(settings.database_url, future=True)
 

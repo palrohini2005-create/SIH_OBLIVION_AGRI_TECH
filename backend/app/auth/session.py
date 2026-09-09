@@ -13,11 +13,11 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import models
-from app.common.errors import not_logged_in, forbidden
-from app.core.config import settings
-from app.core.database import get_db
-from app.core.security import decode_access_token, create_access_token
+from backend.app import models
+from backend.app.common.errors import not_logged_in, forbidden
+from backend.app.core.config import settings
+from backend.app.core.database import get_db
+from backend.app.core.security import decode_access_token, create_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
