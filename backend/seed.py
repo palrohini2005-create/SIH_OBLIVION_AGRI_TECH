@@ -1,20 +1,37 @@
 import csv
-
+from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import models
+import models
 from app.core.config import settings
 from app.core.database import Base, SessionLocal, engine
 
-def read_csv(path: str) -> list[dict]:
+def read_csv(file_name: str) -> list[dict]:
     """Read a CSV file into a list of dicts."""
+    path= Path(file_name)
+    if not path.exists():
+        print(f"Warning: File {file_name} not found.")
+        return[]
     with open(path, newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
+def parse_datetime(val: str | None) -> datetime:
+    """Safely convert CSV strings to datetime objects."""
+    if not val:
+        return datetime.utcnow()
+    try:
+        return datetime.fromisoformat(val)
+    except ValueError:
+        try:
+            return datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return datetime.utcnow()
+
 def seed(db: Session) -> None:
+    Base.metadata.create_all(bind=engine)
+
     crop = read_csv("Crops.csv")
     crop_env = read_csv("crop_env.csv")
     disease = read_csv("Disease.csv")
@@ -24,25 +41,18 @@ def seed(db: Session) -> None:
     farmer_user = read_csv("Farmer_dataset.csv")
     official = read_csv("Officials.csv")
 
-    farmer_id =farmer_user["id"]
-    official = official["id"]
-    crop_id= crop["id"]
-    crop_env_id=crop_env["id"]
-    disease_id=disease["id"]
-    solution_id=solution["id"]
-    symptom_id=symptoms["id"]
-
     # Insert crops
     for row in crop:
         db.add(models.Crop(
             crop_id=row["crop_id"],   # primary key
             crop_name=row["crop_name"]
         ))
+    db.flush()
 
     # Insert farmers
     for row in farmer_user:
         db.add(models.User(
-            farmer_id=row["farmer_id"],   # primary key
+            id=int(row["id"]),   # primary key
             name=row["name"],
             email=row["email"],
             phone=row["phone"],
@@ -51,13 +61,13 @@ def seed(db: Session) -> None:
             district=row["district"],
             village=row["village"],
             state=row["state"],
-            created_at=row["created_at"],
+            created_at=parse_datetime(row.get("created_at")),
         ))
 
     # Insert officials
     for row in official:
         db.add(models.Official(
-            official_id=row["official_id"],   # primary key
+            id=int(row["id"]),   # primary key
             name=row["name"],
             email=row["email"],
             phone=row["phone"],
@@ -69,29 +79,31 @@ def seed(db: Session) -> None:
 
     for row in crop_env:
         db.add(models.CropEnvironment(
-            crop_env_id=row["crop_env_id"],
-            crop_name=row["crop_name"],
-            min_temp=row["min_temperature"],
-            max_temp=row["max_temperature"],
-            ideal_temp=row["ideal_temperature"],
-            humidity=row["humidity"],
-            soil_type=row["soil_type"],
-            soil_ph=row["soil_ph"],
-            water_requirement=row["water_requirement"],
-            sunlight_requirement=row["sunlight_requirement"],
-            suitable_conditions=row["suitable_conditions"]
+            crop_id=int(row["crop_id"]),
+            crop_name=row.get("crop_name"),
+            min_temp=row.get("min_temperature"),
+            max_temp=row.get("max_temperature"),
+            ideal_temp=row.get("ideal_temperature"),
+            humidity=row.get("humidity"),
+            soil_type=row.get("soil_type"),
+            soil_ph=row.get("soil_ph"),
+            water_requirement=row.get("water_requirement"),
+            sunlight_requirement=row.get("sunlight_requirement"),
+            suitable_conditions=row.get("suitable_conditions")
         ))
+    db.flush()
 
     for row in disease:
         db.add(models.Disease(
             disease_id=row["disease_id"],
-            crop_id=row["crop_id"],
+            crop_id=int(row["crop_id"]),
             crop_name=row["crop_name"],
             disease_name=row["disease_name"],
-            scientific_name=row["scientific_name"],
-            causal_agent=row["causal_agent"],
-            description=row["description"]
+            scientific_name=row.get("scientific_name"),
+            causal_agent=row.get("causal_agent"),
+            description=row.get("description")
         ))
+    db.flush()
 
     for row in solution:
         db.add(models.Solution(
@@ -101,7 +113,7 @@ def seed(db: Session) -> None:
             remedy=row["remedy"],
             treatment=row["treatment"],
             precaution=row["precaution"],
-            prevention=row["prevention"]
+            prevention=row.get("prevention")
         ))
 
     for row in symptoms:
@@ -111,3 +123,16 @@ def seed(db: Session) -> None:
             disease_name=row["disease_name"],
             symptom=row["symptom"]
         ))
+    db.commit()
+    print("Database successfully seeded from CSV files!")
+
+if __name__ == "__main__":
+    db_session = SessionLocal()
+    try:
+        seed(db_session)
+    except Exception as e:
+        db_session.rollback()
+        print(f"Failed to seed database: {e}")
+        raise e
+    finally:
+        db_session.close()

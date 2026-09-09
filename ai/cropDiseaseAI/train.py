@@ -1,6 +1,12 @@
 import tensorflow as tf
-from tensorflow.keras import layers, models
-from tensorflow.keras.applications import MobileNetV2
+
+layers = tf.keras.layers
+models = tf.keras.models
+MobileNetV2 = tf.keras.application
+
+'''from tensorflow.keras import layers, models
+from tensorflow.keras.applications import MobileNetV2'''
+
 import os
 
 # ==============================
@@ -76,7 +82,7 @@ data_augmentation = tf.keras.Sequential([
 # LOAD PRETRAINED MODEL
 # ==============================
 
-base_model = MobileNetV2(
+base_model = tf.keras.applications.MobileNetV2(
     input_shape=(224, 224, 3),
     include_top=False,
     weights="imagenet"

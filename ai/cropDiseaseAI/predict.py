@@ -1,6 +1,7 @@
-
+import io
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 
 # Import disease information
 from disease_info import disease_info
@@ -8,21 +9,14 @@ from disease_info import disease_info
 # Import solution/advisory information
 from disease_solution import disease_solution
 
-
-# ==========================================
-# 1. LOAD TRAINED MODEL
-# ==========================================
-
-model = tf.keras.models.load_model(
-    "models/tomato_disease_model.keras"
-)
-
+MODEL_PATH = "ai/cropDiseaseAI/models/tomato_disease_model.keras"
+model = tf.keras.models.load_model(MODEL_PATH)
 
 # ==========================================
 # 2. CLASS NAMES
 # ==========================================
 
-class_names = [
+CLASS_NAMES = [
     "Tomato_Early_Blight",
     "Tomato_Healthy",
     "Tomato_Late_Blight",
@@ -34,155 +28,45 @@ class_names = [
 # 3. CONNECT AI CLASS TO DISEASE ID
 # ==========================================
 
-class_to_id = {
+CLASS_TO_DISEASE_ID = {
     "Tomato_Early_Blight": "D007",
     "Tomato_Healthy": None,
     "Tomato_Late_Blight": "D008",
     "Tomato_Septoria_Leaf_Spot": "D009"
 }
 
+def predict_disease_from_bytes(image_bytes: bytes) -> dict:
+    """Preprocesses raw image bytes, runs model inference,
 
-# ==========================================
-# 4. TEST IMAGE
-# ==========================================
+    and returns the predicted metadata & mapped disease_id.
+    """
+    # 1. Load image from bytes and preprocess for Keras
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    image = image.resize((224, 224))
 
-image_path = "test_images/test.jpg"
+    image_array = tf.keras.utils.img_to_array(image)
+    image_array = tf.expand_dims(image_array, axis=0)
 
+    # 2. Run model inference
+    predictions = model.predict(image_array, verbose=0)
+    predicted_index = int(np.argmax(predictions[0]))
 
-# ==========================================
-# 5. LOAD IMAGE
-# ==========================================
+    predicted_class = CLASS_NAMES[predicted_index]
+    confidence = float(predictions[0][predicted_index] * 100)
 
-image = tf.keras.utils.load_img(
-    image_path,
-    target_size=(224, 224)
-)
-
-image_array = tf.keras.utils.img_to_array(image)
-
-image_array = tf.expand_dims(image_array, 0)
-
-
-# ==========================================
-# 6. MAKE AI PREDICTION
-# ==========================================
-
-predictions = model.predict(
-    image_array,
-    verbose=0
-)
-
-predicted_index = np.argmax(predictions[0])
-
-predicted_class = class_names[predicted_index]
-
-confidence = predictions[0][predicted_index] * 100
-
-
-# ==========================================
-# 7. CONFIDENCE LEVEL
-# ==========================================
-
-if confidence >= 80:
-    confidence_level = "HIGH"
-
-elif confidence >= 60:
-    confidence_level = "MEDIUM"
-
-else:
-    confidence_level = "LOW"
-
-
-# ==========================================
-# 8. GET DISEASE ID
-# ==========================================
-
-disease_id = class_to_id[predicted_class]
-
-
-# ==========================================
-# 9. DISPLAY AI RESULT
-# ==========================================
-
-print("\n==========================================")
-print("       AI CROP DISEASE DETECTION")
-print("==========================================")
-
-print("Crop:", "Tomato")
-
-print("Prediction:", predicted_class)
-
-print("Confidence: {:.2f}%".format(confidence))
-
-print("Confidence Level:", confidence_level)
-
-
-# ==========================================
-# 10. DISPLAY DISEASE INFORMATION
-# ==========================================
-
-if disease_id is not None:
-
-    info = disease_info[disease_id]
-
-    print("------------------------------------------")
-
-    print("Disease ID:", disease_id)
-
-    print("Disease:", info["disease"])
-
-    print("Scientific Name:", info["scientific_name"])
-
-    print("Causal Agent:", info["causal_agent"])
-
-    print("Description:", info["description"])
-
-
-    # ======================================
-    # 11. DISPLAY SOLUTION / ADVISORY
-    # ======================================
-
-    if disease_id in disease_solution:
-
-        solution = disease_solution[disease_id]
-
-        print("------------------------------------------")
-        print("SOLUTION / ADVISORY")
-        print("------------------------------------------")
-
-        print("Solution ID:", solution["solution_id"])
-
-        print("Remedy:", solution["remedy"])
-
-        print("Treatment:", solution["treatment"])
-
-        print("Precaution:", solution["precaution"])
-
-        print("Prevention:", solution["prevention"])
-
+    # 3. Categorize confidence level
+    if confidence >= 80:
+        confidence_level = "HIGH"
+    elif confidence >= 60:
+        confidence_level = "MEDIUM"
     else:
+        confidence_level = "LOW"
 
-        print("------------------------------------------")
-        print("No solution available for this disease.")
-
-
-# ==========================================
-# 12. HEALTHY LEAF
-# ==========================================
-
-else:
-
-    print("------------------------------------------")
-
-    print("Disease ID: N/A")
-
-    print("Disease: Healthy Tomato Leaf")
-
-    print("No disease-specific treatment is required.")
-
-
-# ==========================================
-# 13. END
-# ==========================================
-
-print("==========================================")
+    # 4. Return minimal pure prediction result
+    return {
+        "crop": "Tomato",
+        "predicted_class": predicted_class,
+        "disease_id": CLASS_TO_DISEASE_ID[predicted_class],
+        "confidence": round(confidence, 2),
+        "confidence_level": confidence_level,
+    }
