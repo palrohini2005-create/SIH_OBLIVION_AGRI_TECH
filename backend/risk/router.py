@@ -1,5 +1,9 @@
 from fastapi import APIRouter, HTTPException, Query
 from backend.risk.risk_service import assess_crop_alerts
+from backend.alerts.dashboard_alerts import(
+    get_alert_summary,
+    sort_alerts_by_priority
+)
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
 
@@ -23,4 +27,14 @@ def get_crop_alerts(
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    return result
+    raw_alerts = result.get("alerts",[])
+    sorted_alerts=sort_alerts_by_priority(raw_alerts)
+    summary=get_alert_summary(sorted_alerts)
+
+    return{
+        "crop": crop,
+        "total_alerts": len(sorted_alerts),
+        "summary": summary,
+        "alerts": sorted_alerts,
+        "recommendations": result.get("recommendations", [])
+    }

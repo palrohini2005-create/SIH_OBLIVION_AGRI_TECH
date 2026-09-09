@@ -10,7 +10,7 @@ from app.core.security import hash_password, verify_password
 MINIMUM_PASSWORD_LENGTH = 8
 
 
-def _account(db: Session) -> models.User:
+def account(db: Session) -> models.User:
     """The single row in ``users``."""
     user = db.scalar(select(models.User).limit(1))
     if user is None:

@@ -1,9 +1,13 @@
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 
 # Configure Passlib to use bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Secret key and algorithm (keep SECRET_KEY safe!)
+SECRET_KEY = "supersecretkey"   # replace with env variable in production
+ALGORITHM = "HS256"
 
 def hash_password(password: str) -> str:
     """Hash a plain password for storing in the database."""
@@ -13,14 +17,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hashed version."""
     return pwd_context.verify(plain_password, hashed_password)
 
-# Secret key and algorithm (keep SECRET_KEY safe!)
-SECRET_KEY = "supersecretkey"   # replace with env variable in production
-ALGORITHM = "HS256"
-
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token with optional expiry."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.utcnow(timezone.utc) + (expires_delta or timedelta(minutes=60))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 

@@ -8,7 +8,8 @@ behaves identically whichever backend it is talking to. What it holds is only a
 marker: real authentication would issue something signed, and check it here.
 """
 
-from fastapi import Depends, Request, Response
+from fastapi import Depends, Request, Response, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,18 +17,18 @@ from app import models
 from app.common.errors import not_logged_in, forbidden
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import decode_access_token
+from app.core.security import decode_access_token, create_access_token
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 def start_session(response: Response, email: str) -> None:
+    token = create_access_token(data={"sub": email})
     response.set_cookie(
         key=settings.session_cookie,
         value=email,
         max_age=settings.session_max_age,
         httponly=True,
         secure=settings.session_secure,
-        # Lax is enough because the front end and this service share a hostname
-        # in development, so the calls count as same-site.
         samesite="lax",
         path="/",
     )
@@ -39,25 +40,27 @@ def end_session(response: Response) -> None:
 
 def current_user_optional(
     request: Request,
+    token_from_header: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> models.User | None:
-    """The signed-in account, or None when there is no session cookie."""
-    if not request.cookies.get(settings.session_cookie):
+    token = request.cookies.get(settings.session_cookie) or token_from_header
+    if not token:
         return None
-    return db.scalar(select(models.User).limit(1))
+    try:
+        payload = decode_access_token(token)
+        email: str = payload.get("sub")
+        if not email:
+            return None
 
+        user = db.scalar(select(models.User).where(models.User.email == email))
+        return user
+    except ValueError:
+        return None
 
 def current_user(
     user: models.User | None = Depends(current_user_optional),
 ) -> models.User:
-    """The signed-in account, or a 401.
-
-    Use it as a dependency on anything that needs a session::
-
-        @router.get("/thing")
-        def thing(user: models.User = Depends(current_user)):
-            ...
-    """
+    
     if user is None:
         raise not_logged_in()
     return user
@@ -65,6 +68,8 @@ def current_user(
 def current_admin(
     user: models.User = Depends(current_user),
 ) -> models.User:
-    if user.role != "admin":   # or user.is_admin == False
+    if getattr(user, "role", None) != "admin" and not getattr(
+        user, "is_admin", False
+    ):
         raise forbidden("Admin access required")
     return user

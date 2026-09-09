@@ -1,21 +1,17 @@
-def send_sms_alert(farmer_name, phone_number, disease, risk_level):
+# backend/alerts/sms_service.py
 
-    if risk_level != "HIGH":
-        return {
-            "sms_sent": False,
-            "message": "SMS alert not required"
-        }
+
+def send_sms_alert(farmer_name, phone_number, disease, risk_level):
+    # Skip low-risk alerts to avoid spamming
+    if risk_level in ["LOW"]:
+        return {"status": "skipped", "message": "Low risk; no SMS needed"}
 
     message = (
-        f"AgriTech Alert: High risk of {disease.replace('_', ' ')} "
-        f"is expected in your area. Please monitor your crop "
-        f"and take preventive action."
+        f"AgriGuard Alert: Hi {farmer_name}, {disease.replace('_', ' ')} "
+        f"risk is currently {risk_level}. Please check your dashboard for actions."
     )
 
-    return {
-        "sms_sent": True,
-        "recipient": farmer_name,
-        "phone_number": phone_number,
-        "message": message,
-        "type": "DUMMY_SMS"
-    }
+    # Place your Twilio / SMS API vendor code here
+    print(f"📱 Sending SMS to {phone_number}: {message}")
+
+    return {"status": "sent", "phone": phone_number, "message": message}
